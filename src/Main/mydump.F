@@ -16,7 +16,7 @@
      &    NG=132,NL=99,NO=20*MCL+16,NP=32*NTMAX,NQ=31*MMAX,
      &    NS=44*MMAX)
       REAL*4  B,C,D,E,G,L,M,O,P,Q,S
-      INTEGER K,I,NPARTMP(10),KSTAR,NCOMM,IA
+      INTEGER K,I,NPARTMP(10),KSTAR,NCOMM,IA,IU
 *
 #ifdef PARALLEL
       integer iinl,iisize,inl,istart,iend,ilen,irun,idiff,jsize
@@ -84,7 +84,10 @@
          write(FILE(JUNIT),118) FRAG(JUNIT),TCHAR
  118     format(A7,A20)
          print*,' MYDUMP ',TTOT,TCHAR,J,FILE(JUNIT)
-      OPEN (UNIT=J,STATUS='UNKNOWN',FORM='UNFORMATTED',FILE=FILE(JUNIT))
+*     Fixed unit: the call counter J would reach units in use (fort.666).
+         IU = 200 + JUNIT
+      OPEN (UNIT=IU,STATUS='UNKNOWN',FORM='UNFORMATTED',
+     &      FILE=FILE(JUNIT))
 *
 *     Also write params.h to help data transfer
             NPARTMP(1) = NMAX
@@ -103,15 +106,15 @@
      *      ' sum na+...+ns=',NA+NB+NC+ND+NE+NG+NL+NM+NO+NP+NQ+NS
             PRINT*,' NA-NS=',NA,NB,NC,ND,NE,NG,NL,NM,NO,NP,NQ,NS
 *
-            WRITE (J) NPARTMP
+            WRITE (IU) NPARTMP
 *     
-            WRITE (J) ntot,npairs,nttot,ia,b,c,d,e,g,l,m,o,p,q,s
+            WRITE (IU) ntot,npairs,nttot,ia,b,c,d,e,g,l,m,o,p,q,s
          END IF
        end if
 *
         if(rank.eq.0)then
          IF(MOD(J-201,NCOMM).EQ.0.OR.JUNIT.EQ.1)THEN
-        WRITE (J) ((x(k,i),k=1,3),i=1,ntot),((x0(k,i),k=1,3),i=1,ntot),
+        WRITE (IU) ((x(k,i),k=1,3),i=1,ntot),((x0(k,i),k=1,3),i=1,ntot),
      *   ((x0dot(k,i),k=1,3),i=1,ntot),((xdot(k,i),k=1,3),i=1,ntot),
      *   ((f(k,i),k=1,3),i=1,ntot),((fdot(k,i),k=1,3),i=1,ntot),
      *   (body(i),i=1,ntot),(rs(i),i=1,ntot),
@@ -128,9 +131,9 @@
      *   ((frdot(k,i),k=1,3),i=1,ntot),((d0r(k,i),k=1,3),i=1,ntot),
      *   (kstar(i),i=1,ntot),(iminr(i),i=1,ntot),(name(i),i=1,ntot)
 *
-        write (J) (aspn(i),i=1,ntot)
+        write (IU) (aspn(i),i=1,ntot)
 *
-        write (J) ((u(k,i),k=1,4),i=1,npairs),((u0(k,i),k=1,4),i=1,
+        write (IU) ((u(k,i),k=1,4),i=1,npairs),((u0(k,i),k=1,4),i=1,
      *    npairs),((udot(k,i),k=1,4),i=1,npairs),((fu(k,i),k=1,4),i=1,
      *    npairs),((fudot(k,i),k=1,4),i=1,npairs),((fudot2(k,i),k=1,4),
      *    i=1,npairs),((fudot3(k,i),k=1,4),i=1,npairs),(h(i),i=1,
@@ -142,23 +145,23 @@
      *    k=1,4),i=1,npairs),((fd0(k,i),k=1,4),i=1,npairs),
      *    (kblist(i),i=1,10*npairs),(kslow(i),i=1,npairs),tblist
 *
-        write (J) (list(1,i),(list(k,i),k=2,list(1,i)+1),i=1,ntot)
+        write (IU) (list(1,i),(list(k,i),k=2,list(1,i)+1),i=1,ntot)
 *
-        write (J) NXTLIMIT,NGHOSTS,NXTLST(1:NXTLIMIT+NGHOSTS),NXTLEN,
+        write (IU) NXTLIMIT,NGHOSTS,NXTLST(1:NXTLIMIT+NGHOSTS),NXTLEN,
      *       NDTK(1:64),NDTMIN,NDTMAX,NXTLEVEL,
      *       (NLSTDELAY(K),K=1,NLSTDELAY(1)+1)
 *
 #ifdef TT
 *** FlorentR
-        write (J) ttunit,tnowsave,ttmode,nbtt,indtt,ikeypot(1:11)
-        write (J) (((ttens(k,i,kk),k=1,3),i=1,3),kk=1,nbtt),
+        write (IU) ttunit,tnowsave,ttmode,nbtt,indtt,ikeypot(1:11)
+        write (IU) (((ttens(k,i,kk),k=1,3),i=1,3),kk=1,nbtt),
      *       ((tteff(k,i),k=1,3),i=1,3),((dtteff(k,i),k=1,3),i=1,3),
      *       (tttime(i),i=1,nbtt),(tteigen(k),k=1,3),
      &       ((tteigenv(k,i),k=1,3),i=1,3),(ttrtide(k),k=1,3)
 *** FRenaud
 #endif
-        END FILE J
-        CLOSE (UNIT=J)
+        END FILE IU
+        CLOSE (UNIT=IU)
         END IF
         end if
 *
