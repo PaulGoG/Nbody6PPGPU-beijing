@@ -7,16 +7,18 @@
       integer i,ip
       real*8 dt,dtmp,time
 
-*     Counts for decimal number precision
+*     Counts for decimal number precision: the smallest ip (at most 9)
+*     for which dt*10**ip is a whole number to the rounding of dt.
       ip = 0
       dtmp = dt
- 2    if(dtmp-int(dtmp).ne.0.D0) then
+ 2    if(ip.lt.9.and.
+     &   abs(dtmp-anint(dtmp)).gt.1.D-12*max(1.D0,abs(dtmp))) then
          ip = ip + 1
          dtmp = dtmp*10.D0
          go to 2
       end if
 
-      if(ip.gt.10) then
+      if(ip.ge.10) then
          write(form,'(A5,I2,A1)') '(F20.',ip,')'
       else
          write(form,'(A5,I1,A1)') '(F20.',ip,')'
