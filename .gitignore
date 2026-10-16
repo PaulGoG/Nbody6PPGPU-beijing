@@ -68,3 +68,14 @@ dkms.conf
 examples/example_1k/*
 examples/.ipynb_checkpoints
 !examples/example_1k/1k.inp
+
+# Outputs of configure: generated on every build, never tracked
+/config.log
+/config.status
+/Makefile
+/build/Makefile
+/include/params.h
+
+# Written into the tree by Nbody6Dynamics.jl at build time
+/hdf5_flags.mk
+/build/BUILD_INFO.toml
