@@ -111,9 +111,9 @@
       IF (KZ(14).EQ.0) THEN
 *       Note: EPL holds accumulated tidal energy if KZ(14) = 3.
           EPL = 0.0D0
-*     ELSE
+      ELSE IF (KZ(14).LE.2) THEN
 *       Employ general expression sum {m*r*F} for virial energy.
-*         CALL XTRNLV(1,N)
+          CALL XTRNLV(1,N)
 *       Form tidal energy with Plummer potential (note EPL use for #14=3).
 *         IF (KZ(14).EQ.3.OR.KZ(14).EQ.4) THEN
 *             EPL = 0.0
