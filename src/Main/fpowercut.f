@@ -24,7 +24,8 @@
       dmr = -4.0*pi*Den_PowCut(r,B_AMP,B_ALPHA,B_RC)
 
       FM(1:3) = mr*XI(1:3)
-      FD = mr*(XIDOT -3.0*rvr2*XI) + dmr*rvr2/r2*XI
+*       d(-M/r^3)/dt = mr*(-3*rvr2) - 4*pi*rho*rvr2 (dM/dr = 4*pi*r^2*rho).
+      FD = mr*(XIDOT -3.0*rvr2*XI) + dmr*rvr2*XI
 
 *
       RETURN
