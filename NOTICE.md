@@ -25,6 +25,11 @@ Each is one commit on `campaign`; the tag that first contains it is given in bra
 - `configure.ac`, `configure`: `nvcc` is found under `--with-cuda=PREFIX` when it is not on `PATH` [v2026.07-campaign.3].
 - `reg.avx.cpp`, `reg.sse.cpp`, `gpunb.velocity.cu`: thread limits raised from 32 and 96 to 512 and 1024
   [v2026.07-campaign.3].
+- `xtrnlv.F`: in the Milky-Way potential mode (KZ(14) = 5) an escaper or a mass change no longer carries
+  the absolute Galactic potential into the energy bookkeeping; the mode no longer halts at the first
+  energy check [v2026.07-campaign.4].
+- `fnfw.f`, `fpowercut.f`: jerk of the NFW halo and of the cut-off power-law bulge of MWPotential2014
+  [v2026.07-campaign.4].
 - From upstream `dev`, cherry-picked with their authorship: supernova ghosts removed from neighbour and
   perturber lists in `mdot.F`, ghost guards in `coal.f`, `chterm.f`, `expel.f`, `expel2.f`; `lagr.f`
   cumulative statistics and initialised radii under KZ(8) = 0; the Eggleton IMF exponent in `imf2.f`; HDF5
