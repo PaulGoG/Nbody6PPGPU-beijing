@@ -4,8 +4,8 @@ This repository is a fork of [nbody6ppgpu/Nbody6PPGPU-beijing](https://github.co
 the NBODY6++GPU code maintained by Rainer Spurzem's group at ARI Heidelberg and KIAA, Peking University.
 The branch `campaign` carries the corrections I apply for the simulation campaigns driven by
 [Nbody6Dynamics.jl](https://github.com/PaulGoG/Nbody6Dynamics.jl), one commit per correction on top of the
-upstream release v2026.07 (commit 618d7a4). The upstream branches are mirrored unchanged. Pull requests
-upstream follow once the corrections have been validated in production.
+upstream release v2026.07 (commit 618d7a4). The other branches are upstream's as of the fork, unchanged
+and not kept in sync. Pull requests upstream follow once the corrections have been validated in production.
 
 ## Credit
 
