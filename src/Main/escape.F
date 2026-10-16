@@ -153,7 +153,7 @@
      &       (JLIST(J),J=1,NCORR)
    18 FORMAT (/,' ESCAPE T,NESC =',1P,E13.5,I6,' total N,NSESC,NBESC =',
      & I10,I8,I6,' M* ',1P,E13.5,' total E, RCM, RESC, <m*>, NCRIT1 =',
-     &    4E13.5,I10,' JLIST: ',1000I10)
+     &    4E13.5,I10,' JLIST: ',1000(I10))
 *
       IF (KZ(23).EQ.4)THEN
           JLAST = MIN(2*NCORR,NMAX)
