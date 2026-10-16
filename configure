@@ -5583,6 +5583,8 @@ fi
 
 
       if test "x$NVCC" == xnone; then :
+  { NVCC=; unset NVCC;}
+  { ac_cv_prog_NVCC=; unset ac_cv_prog_NVCC;}
   # Extract the first word of "nvcc", so it can be a program name with args.
 set dummy nvcc; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5

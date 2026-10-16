@@ -284,7 +284,9 @@ AC_ARG_WITH([cuda_sdk],
 AS_IF([test "x$enable_gpu" != xno],
      [AC_CHECK_PROG([NVCC], [nvcc], [nvcc], [none])
       AS_IF([test "x$NVCC" == xnone], 
-            [AC_CHECK_PROG([NVCC], [nvcc], [$cuda_prefix/bin/nvcc], [none], [$cuda_prefix/bin])
+            [AS_UNSET([NVCC])
+             AS_UNSET([ac_cv_prog_NVCC])
+             AC_CHECK_PROG([NVCC], [nvcc], [$cuda_prefix/bin/nvcc], [none], [$cuda_prefix/bin])
              AS_IF([test "x$NVCC" == xnone], 
                    [AC_MSG_FAILURE(
                        [Cannot find CUDA compiler nvcc, please check whether nvcc is in environment PATH or use --with-cuda=PREFIX to provide the PATH of CUDA installation])])],
