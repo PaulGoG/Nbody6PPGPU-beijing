@@ -127,25 +127,12 @@
         ET = BODY(I)*ET
 *
       ELSE IF (KZ(14).EQ.5) THEN
-*     MW potential 
-         TMASS = 0.0D0
-C*     Predict c.m. position
-C         DT = TIME + TOFF - TG
-C         DT2 = 0.5*DT
-C         DT3 = ONE3*DT
-C         RGP = RG + ((FGD*DT3 + FG)*DT2 + VG)*DT 
-*     loop individual stars
-         DO I = I1,I2
-            XI = (X(1:3,I) + RG)
-            call pmwpot(XI,ETI)
-            TMASS = TMASS + BODY(I)
-            ET = ET + BODY(I)*ETI
-         END DO
-*     cluster c.m. potential
-C         call pmwpot(RG, ETI)
-C         ET = ET - TMASS*ETI
-C         ET = ET + 0.5D0*TMASS*(VG(1)*VG(1)+VG(2)*VG(2)+VG(3)*VG(3))
-C         write(6,*) 'CM ETI',ETI,TMASS,ET,DT,RG
+*       MWPotential2014: ETIDE is the work of the differential force,
+*       accumulated in REGCOR_GPU, not a potential energy of the members.
+*       A single body (escaper, mass change, NBPOT) carries no share of
+*       it, so HT = 0; the absolute potential M*PHI(RG+X) used before
+*       entered every escaper energy with M*PHI(RG) ~ -1.5D+04*M.
+         ET = 0.0D0
 #ifdef TT
 *** FlorentR - case of tidal tensor
       ELSE IF (KZ(14).EQ.9) THEN
