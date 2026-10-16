@@ -1438,9 +1438,9 @@ C      END IF
          if(rank.eq.0)
      &        WRITE (6,98)  TOFF, TIME, TIME+TOFF, TCOMP, CPUTOT/60.0, 
      &        ERRTOT, DETOT
- 98      FORMAT (//,9X,'COMMON SAVED AT TOFF/TIME/TTOT =',1P,E16.8,
+ 98      FORMAT (//,9X,'COMMON SAVED AT TOFF/TIME/TTOT =',1P,3E16.8,
      &        '  TCOMP =',E16.8,'  CPUTOT =',E16.8,
-     &                  '  ERRTOT =',F12.5,'  DETOT =',F12.5)
+     &                  '  ERRTOT =',E13.5,'  DETOT =',E13.5)
       END IF
 *
 *     Determine time interval and step numbers per time unit
