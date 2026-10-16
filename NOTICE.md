@@ -7,6 +7,29 @@ The branch `campaign` carries the corrections I apply for the simulation campaig
 upstream release v2026.07 (commit 618d7a4). The other branches are upstream's as of the fork, unchanged
 and not kept in sync. Pull requests upstream follow once the corrections have been validated in production.
 
+## Corrections on this branch
+
+Each is one commit on `campaign`; the tag that first contains it is given in brackets.
+
+- `escape.F`: a step with more than 1000 escapers no longer ends the run with a format error [v2026.07-campaign.1].
+- `energy.F`, `energy_mpi.F`: under a linearised external field (KZ(14) = 1, 2) the potential energy of the
+  field enters the total energy and the energy check again [v2026.07-campaign.1].
+- `extra_inc/cuda`: helper headers from cuda-samples v13.0, so GPU builds compile with CUDA 13 [v2026.07-campaign.1].
+- `configure` outputs untracked, so a configured checkout of a tag is clean [v2026.07-campaign.2].
+- `string_left.f`: the digit count of an output interval is bounded; intervals without a short exact binary
+  expansion no longer hang the run, and a ten-decimal interval no longer builds an invalid format [v2026.07-campaign.3].
+- `mydump.F`: unit-1 COMMON saves (end of run, STOP file, CPU limit, halt) are written whatever `NCOMM`
+  [v2026.07-campaign.3]; dumps are written on a fixed unit instead of one numbered by the call counter
+  [v2026.07-campaign.3].
+- `intgrt.F`: the `COMMON SAVED` line prints each value under its label [v2026.07-campaign.3].
+- `configure.ac`, `configure`: `nvcc` is found under `--with-cuda=PREFIX` when it is not on `PATH` [v2026.07-campaign.3].
+- `reg.avx.cpp`, `reg.sse.cpp`, `gpunb.velocity.cu`: thread limits raised from 32 and 96 to 512 and 1024
+  [v2026.07-campaign.3].
+- From upstream `dev`, cherry-picked with their authorship: supernova ghosts removed from neighbour and
+  perturber lists in `mdot.F`, ghost guards in `coal.f`, `chterm.f`, `expel.f`, `expel2.f`; `lagr.f`
+  cumulative statistics and initialised radii under KZ(8) = 0; the Eggleton IMF exponent in `imf2.f`; HDF5
+  handle leaks in `custom_output_facility.F` [v2026.07-campaign.3].
+
 ## Credit
 
 NBODY6++GPU is the work of Sverre Aarseth (NBODY6), Rainer Spurzem (NBODY6++), Long Wang (the GPU, SIMD and
