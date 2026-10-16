@@ -79,7 +79,7 @@
          END IF
          J = J + 1
          NCOMM = IA(16)
-         IF(MOD(J-201,NCOMM).EQ.0)THEN
+         IF(MOD(J-201,NCOMM).EQ.0.OR.JUNIT.EQ.1)THEN
          call string_left(TCHAR,TTOT,DTADJ)
          write(FILE(JUNIT),118) FRAG(JUNIT),TCHAR
  118     format(A7,A20)
@@ -110,7 +110,7 @@
        end if
 *
         if(rank.eq.0)then
-         IF(MOD(J-201,NCOMM).EQ.0)THEN
+         IF(MOD(J-201,NCOMM).EQ.0.OR.JUNIT.EQ.1)THEN
         WRITE (J) ((x(k,i),k=1,3),i=1,ntot),((x0(k,i),k=1,3),i=1,ntot),
      *   ((x0dot(k,i),k=1,3),i=1,ntot),((xdot(k,i),k=1,3),i=1,ntot),
      *   ((f(k,i),k=1,3),i=1,ntot),((fdot(k,i),k=1,3),i=1,ntot),
