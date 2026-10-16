@@ -6,7 +6,7 @@
 #include <vector>
 #include "simd_define.h"
 
-#define TMAX 32 // maximum number of threads
+#define TMAX 512 // maximum number of threads
 #if 1
 #include <omp.h>
 #else
