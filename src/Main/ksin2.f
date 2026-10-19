@@ -181,6 +181,8 @@
 *       Set flags to distinguish primordial binaries & standard KS motion.
       LIST(2,JCOMP) = K
       KSLOW(IPAIR) = 1
+*       Start the GW accumulation clock of the new pair (KSINT, UNPERT).
+      TGWREF(IPAIR) = TIME
 *
 *       Check diagnostic output of new hard binary.
       IF (KZ(8).GT.0.AND.K.EQ.0) THEN

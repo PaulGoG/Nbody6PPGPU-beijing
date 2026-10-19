@@ -45,6 +45,11 @@
      &    (KSTAR(I2).GE.10.AND.KSTAR(I2).LE.14).AND.
      &    H(IPAIR).LT.0.D0.AND.ECC.GT.0.D0
         IF (LBRAKE) A_EIN = 3.0*TWOPI*BODY(I)/(SEMI*CL2*(1-ECC2))
+*       Restart the GW accumulation clock unless the pair is a bound
+*       compact pair under KZ(27) > 2 (decay accumulates from TGWREF).
+      IF (.NOT.(KZ273.EQ.3.AND.H(IPAIR).LT.0.D0.AND.
+     &    KSTAR(I1).GE.10.AND.KSTAR(I1).LE.14.AND.
+     &    KSTAR(I2).GE.10.AND.KSTAR(I2).LE.14)) TGWREF(IPAIR) = TIME
 *       Check for further unperturbed motion.
 *       Make sure relativistic binary is not unperturbed.
       IF (NNB0.EQ.0.AND.H(IPAIR).LT.0.0) THEN
@@ -230,7 +235,7 @@
         LBRAKE = KZ273.EQ.3.AND.
      &    (KSTAR(I1).GE.10.AND.KSTAR(I1).LE.14).AND.
      &    (KSTAR(I2).GE.10.AND.KSTAR(I2).LE.14).AND.
-     &    (KSTAR(I2).GE.10.AND.KSTAR(I2).LE.14).AND.ECC.GT.0.D0
+     &    (KSTAR(I2).GE.10.AND.KSTAR(I2).LE.14).AND.ECC.GE.0.D0
 * JFNS Adding Hyperbolic-friendly checks
 *     &    HI.LT.0.D0.AND.ECC.GT.0.D0
 
@@ -251,15 +256,30 @@
 *    &   ' e,a,QP,RS[NB]=',4E13.5,' H, GAMMA=',2E13.5,
 *    &   ' A_EIN, TORB=',2E13.5)
 *
-*       Special binary type -25 for GR shrinking binary
-*
-           DTGW(IPAIR) = STEP(I1)
+*       Peters interval: for a bound pair the time since the last applied
+*       decay (TGWREF; global time, so KS slow-down is included), for a
+*       hyperbolic pair the current step.
+           IF (HI.LT.0.D0) THEN
+              DTX = TIME - TGWREF(IPAIR)
+           ELSE
+              DTX = STEP(I1)
+           END IF
+           DTACC = DTX
            CALL GW_DECISION(SEMI,BODY(I1),BODY(I2),
-     &         CLIGHT,ECC,DTGW(IPAIR),RES,TGR,KMIN)
+     &         CLIGHT,ECC,DTX,RES,TGR,KMIN)
 *
+*       Special binary type -25 for GR shrinking binary: apply the decay once
+*       it changes a or e by more than 1e-4, otherwise keep accumulating.
            IF(RES.EQ.1.AND.GAMMA(IPAIR).LT.1.D-1) THEN
+*       The type -25 selects the GR branch of KSTIDE only for this call: a
+*       negative c.m. type marks a chaotic binary elsewhere (MDOT, FLYBY).
+              KSTGW = KSTAR(I)
               KSTAR(I) = -25
+*       A bound pair takes the whole interval (KSTIDE integrates it in steps).
+              IF (HI.LT.0.D0) DTX = DTACC
+              DTGW(IPAIR) = DTX
               CALL KSTIDE(IPAIR,QPERI)
+              IF (HI.LT.0.D0) TGWREF(IPAIR) = TIME
       if(rank.eq.0)WRITE(6,665)
      &   RES,KMIN,TTOT,DTGW(IPAIR),STEP(I1),I,IPAIR,LIST(1,I1),
      &   NAME(I1),NAME(I2),NAME(I),KSTAR(I1),KSTAR(I2),KSTAR(I),
@@ -270,14 +290,16 @@
      &   I10,2I6,' NM1,2,S=',3I10,' KW1,2,S=',3I4,' M1,2[M*]',2E13.5,
      &   ' e,a,QP,RS[NB]=',4E13.5,' H, GAMMA=',2E13.5,
      &   ' A_EIN, TORB, TGR(PM)=',3E13.5)
-*       Prepare coal flag if PERI < 25 R_SCHW
-            SEPMRG = 2.5D1*RSCHW
-               IF(DABS(QPERI).LT.SEPMRG.OR.TGR.LT.TORB) THEN
-               if(rank.eq.0) PRINT *,' GR KSINT COLL: QP SEPMRG C ',
-     &         ' RSCH ECC SEMI ',QPERI,SEPMRG,CLIGHT,RSCHW,ECC,SEMI
-                  IPHASE = -1
-                  GO TO 100
-               END IF
+              KSTAR(I) = KSTGW
+           END IF
+*       Coalescence if PERI < 25 R_SCHW or the decay time is below one period
+*       (checked at every step, not only on steps that apply the decay).
+           SEPMRG = 2.5D1*RSCHW
+           IF(DABS(QPERI).LT.SEPMRG.OR.TGR.LT.TORB) THEN
+              if(rank.eq.0) PRINT *,' GR KSINT COLL: QP SEPMRG C ',
+     &        ' RSCH ECC SEMI ',QPERI,SEPMRG,CLIGHT,RSCHW,ECC,SEMI
+              IPHASE = -1
+              GO TO 100
            END IF
         END IF
 *       End 2nd GR treatment
@@ -723,7 +745,7 @@ c$$$      print*,rank,'rmax',rmax
 *
 *     Decide if you want to integrate or not  
       INTEGER RES,KMIN
-      REAL*8 SEMI,M1,M2,CLIGHT,ECC,DT,DE(5),TGR,DTX
+      REAL*8 SEMI,M1,M2,CLIGHT,ECC,DT,DE(5),TGR,DTX,DE1(5)
       REAL*8 ECCNEW,SEMNEW,ECCN,SEMN
       REAL*8 ttgr1,ttgr2
       LOGICAL LSANE,COMP
@@ -737,11 +759,12 @@ c$$$      print*,rank,'rmax',rmax
 *
       RES=0
 	  KMIN=0
+      DTX = DT
       ECCN = ECC-DE(4)
       SEMN = SEMI-DE(3)
 	  
 * JFNS Added differentiation between hyperbolic & elliptical 
-	  IF (ECC.GT.0.D0.AND.ECC.LT.1.D0.AND.SEMI.GT.0.D0) THEN
+	  IF (ECC.GE.0.D0.AND.ECC.LT.1.D0.AND.SEMI.GT.0.D0) THEN
 *	  
 *      PRINT*,' 0 GW_DEC: M1/2 KMIN DT DE ',M1,M2,KMIN,DT,DE
 *      PRINT*,' 0 ECCN, SEMN,ECC,SEMI ',ECCN, SEMN,ECC,SEMI
@@ -781,18 +804,26 @@ c$$$      print*,rank,'rmax',rmax
       SEMNEW = SEMN
       DTOLD = DT
       DT = DTX
-      TGR = DABS(DT*SEMI/DE(3))
+*       Decay time a/|da/dt| from the rates (also for an empty interval).
+      IF (DE(3).NE.0.D0) THEN
+         TGR = DABS(DT*SEMI/DE(3))
+      ELSE
+         CALL TIDES3(SEMI,M1,M2,ECC,CLIGHT,1.0D0,DE1)
+         TGR = 1.0D+30
+         IF (DE1(3).NE.0.D0) TGR = DABS(SEMI/DE1(3))
+      END IF
 	  
 * JFNS Added hyperbolic case
 *      LSANE = ECCNEW.GT.0.D0.AND.ECCNEW.LT.1.D0.AND.
 *          SEMNEW.GT.0.D0
-	  LSANE = ECCNEW.GT.0.D0
+	  LSANE = ECCNEW.GE.0.D0
 *
 	  IF (ECC.GT.1.0D0) THEN
-	  COMP = DABS(DE(3)/SEMI).GT.1.0D-4.OR.(DE(4)/ECC).GT.1.0D-4
+	  COMP = DABS(DE(3)/SEMI).GT.1.0D-4.OR.DE(4).GT.1.0D-4*ECC
 	  ELSE
 	  LSANE = LSANE.AND.SEMNEW.GT.0.D0
-	  COMP = DABS(DE(3)/SEMI).GT.1.0D-4.OR.(DE(4)/ECC).GT.1.0D-4
+	  COMP = DABS(DE(3)/SEMI).GT.1.0D-4.OR.
+     &       (ECC.GT.0.D0.AND.DE(4).GT.1.0D-4*ECC)
 	  END IF
 	  LSANE = LSANE.AND.COMP
 *	  

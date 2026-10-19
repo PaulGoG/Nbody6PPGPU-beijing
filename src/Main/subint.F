@@ -21,7 +21,7 @@ c$$$      COMMON/KSSTAT/ISTEPP,ISTEPU,IBINP,IBINU
       COMMON/XPRED/ TPRED(NMAX),TRES(KMAX),ipredall
       REAL*8 TPRED
       LOGICAL ipredall
-      REAL*8 ZMPI(57,KMAX)
+      REAL*8 ZMPI(58,KMAX)
       Integer inum(maxpe),ista(maxpe),istart,iend
 *      INTEGER CMBLIST(2,KMAX/maxpe),CMBLEN
       INTEGER JMPI(3,maxpe),JMPI_THR(3),IMPI_THR(LMAX*KMAX),NSTEPUOLD
@@ -377,6 +377,7 @@ c$$$  CMBSTAT(2,CMBLEN) = IPHASE
                   ZMPI(49:55,L) = SF(1:7,IPAIR)
                   ZMPI(56,L) = STEP(I1)
                   ZMPI(57,L) = T0(I1)
+                  ZMPI(58,L) = TGWREF(IPAIR)
                   NNBKS = LIST(1,I1) + 1
                   IMPI_THR(NNBKTOT+1:NNBKTOT+NNBKS)=LIST(1:NNBKS,I1)
                   IMPI_THR(NNBKTOT+NNBKS+1)=KSLOW(IPAIR)
@@ -422,8 +423,8 @@ c$$$  CMBSTAT(2,CMBLEN) = IPHASE
 c$$$  print*,'SERV',rank,istsen,istrec,icnt,icnt2
 c$$$  call flush(6)
 *     --12/29/13 22:43-lwang-end----------------------------------------*
-                  CALL MPI_SENDRECV(ZMPI(1,istsen),57*icnt,MPI_REAL8,
-     *                 isend,rank,ZMPI(1,istrec),57*icnt2,MPI_REAL8,
+                  CALL MPI_SENDRECV(ZMPI(1,istsen),58*icnt,MPI_REAL8,
+     *                 isend,rank,ZMPI(1,istrec),58*icnt2,MPI_REAL8,
      *                 irecv,irecv,MPI_COMM_WORLD,status,ierr)
 c$$$                  CALL MPI_SENDRECV(IMPI(1,istsen),lmax*icnt,
 c$$$     *                 MPI_INTEGER,isend,rank,IMPI(1,istrec),
@@ -485,6 +486,7 @@ c$$$  call flush(6)
                   SF(1:7,IPAIR) = ZMPI(49:55,L)
                   STEP(I1) = ZMPI(56,L)
                   T0(I1) = ZMPI(57,L)
+                  TGWREF(IPAIR) = ZMPI(58,L)
                   NNBKS = IMPI(NNBKTOT) + 1
                   LIST(1:NNBKS,I1) = IMPI(NNBKTOT:NNBKTOT+NNBKS-1)
                   KSLOW(IPAIR) = IMPI(NNBKTOT+NNBKS)

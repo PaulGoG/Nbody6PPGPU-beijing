@@ -707,15 +707,24 @@ c$$$            end if
          DTXMIN = MIN(DTX(1),DTX(2))
          call cputim(ttgr7)
          CALL GRRAD(MASS(1),MASS(2),SEP,ECC,JORB,DJGR,DELET)
+*       Under KZ(27) > 2 the GW decay of a compact KS pair is integrated in
+*       KSINT and UNPERT; the look-up does not apply it a second time.
+         IF (KZ273.EQ.3.AND.
+     &       KSTAR(JX(1)).GE.10.AND.KSTAR(JX(1)).LE.14.AND.
+     &       KSTAR(JX(2)).GE.10.AND.KSTAR(JX(2)).LE.14) THEN
+            DJGR = 0.0D0
+            DELET = 0.0D0
+         END IF
          call cputim(ttgr8)
          if(rank.eq.0)ttgrrad = ttgrrad + (ttgr8-ttgr7)*60.
          if(rank.eq.0)igrrad = igrrad + 1
          DJORB = DJT + DJGR
-         DTGR = 0.02D0*JORB/ABS(DJORB)
+         IF (DJORB.NE.0.0D0) DTGR = 0.02D0*JORB/ABS(DJORB)
          CL2 = CLIGHT**2
          A_EIN = 3.0*TWOPI*BODY(J)/(SEMI*CL2*(1-ECC2))
          TORB = TWOPI*SQRT(SEMI**3/BODY(J))
-         TGR = JORB/DJGR
+         TGR = 1.0D+30
+         IF (DJGR.NE.0.0D0) TGR = JORB/DJGR
          RSCHW = 2.0*BODY(J)/CL2
          QPERI = SEMI*(1.D0 - ECC)
          IF(J1.LT.1)J1 = J

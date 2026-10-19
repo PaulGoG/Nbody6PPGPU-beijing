@@ -41,13 +41,17 @@
       RI2 = (X(1,I) - RDENS(1))**2 + (X(2,I) - RDENS(2))**2 +
      &                               (X(3,I) - RDENS(3))**2
 
-*       Skip Impact for hard binaries Francesco Rizzuto/R.Sp. Dec. 2021
-      IF (KSTAR(I).EQ.-25) THEN
+*       Skip Impact for hard binaries Francesco Rizzuto/R.Sp. Dec. 2021:
+*       bound compact pair under GR (KZ(27) > 2) with pericentre < 50 R_sun
+*       (SU = length unit in R_sun); a chain or hierarchy has no GW decay.
+      IF (KZ273.EQ.3.AND.H(IPAIR).LT.0.0D0.AND.
+     &    KSTAR(I1).GE.10.AND.KSTAR(I1).LE.14.AND.
+     &    KSTAR(I2).GE.10.AND.KSTAR(I2).LE.14) THEN
          SEMI_ = -0.5*BODY(I)/H(IPAIR)
          ECC2 = (1.0-R(IPAIR)/SEMI_)**2+TDOT2(IPAIR)**2/(BODY(I)*SEMI_)
          ECC = SQRT(ECC2)
          QP_ = SEMI_*(1.0D0 - ECC) 
-         IF(QP_.LT.SU*5.0D1) THEN
+         IF(QP_.LT.5.0D1/SU) THEN
 *             PRINT *, 'SKIP IMPACT M12 NAM1 ECC QP KSTAR', 
 *     &       BODY(I1), BODY(I2), NAME(I1),ECC,QPERI,KSTAR(I) 
              GO TO 100 

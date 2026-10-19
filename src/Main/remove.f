@@ -127,6 +127,7 @@
           HDOT3(JPAIR) = HDOT3(JP1)
           HDOT4(JPAIR) = HDOT4(JP1)
           KSLOW(JPAIR) = KSLOW(JP1)
+          TGWREF(JPAIR) = TGWREF(JP1)
           SF(5,JPAIR) = SF(5,JP1)
           SF(6,JPAIR) = SF(6,JP1)
           SF(7,JPAIR) = SF(7,JP1)

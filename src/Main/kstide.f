@@ -111,6 +111,38 @@
            DTX = DTGW(IPAIR)
            call cputim(ttgr3)
            CALL TIDES3(SEMI,BODY(I1),BODY(I2),ECC,CLIGHT,DTX,DE)
+*       Bound pair: integrate the Peters equations over DTX in midpoint steps
+*       that change a by at most 1e-3 (an accumulated interval may be long);
+*       stop inside the coalescence pericentre 25 R_S.
+           IF (ECC.LT.1.0D0.AND.SEMI.GT.0.0D0) THEN
+              TGR0 = DABS(DTX*SEMI/DE(3))
+              QGW = 5.0D1*BODY(I)/CLIGHT**2
+              SEMIS = SEMI
+              ECCS = ECC
+              TLEFT = DTX
+    6         CALL TIDES3(SEMIS,BODY(I1),BODY(I2),ECCS,CLIGHT,1.0D0,DE)
+              DTS = TLEFT
+              IF (DE(3)*DTS.GT.1.0D-03*SEMIS) DTS = 1.0D-03*SEMIS/DE(3)
+              SEMIM = SEMIS - 0.5D0*DE(3)*DTS
+              ECCMID = ECCS - 0.5D0*DE(4)*DTS
+              IF (SEMIM.GT.0.0D0.AND.ECCMID.GE.0.0D0.AND.
+     &            ECCMID.LT.1.0D0) THEN
+                 CALL TIDES3(SEMIM,BODY(I1),BODY(I2),ECCMID,CLIGHT,
+     &                       DTS,DE)
+                 SEMIS = SEMIS - DE(3)
+                 ECCS = ECCS - DE(4)
+              ELSE
+                 SEMIS = SEMIS - DE(3)*DTS
+                 ECCS = MAX(ECCS - DE(4)*DTS,0.0D0)
+              END IF
+              TLEFT = TLEFT - DTS
+              IF (TLEFT.GT.0.0D0.AND.SEMIS.GT.0.0D0.AND.
+     &            ECCS.GE.0.0D0.AND.ECCS.LT.1.0D0.AND.
+     &            SEMIS*(1.0D0 - ECCS).GT.QGW) GO TO 6
+*       Net changes over the interval (the energy change follows from SEMI1).
+              DE(3) = SEMI - SEMIS
+              DE(4) = ECC - ECCS
+           END IF
            call cputim(ttgr4)
            DH = -DE(1)/ZMU
 *
@@ -122,6 +154,7 @@
            A_EIN = 3.0*TWOPI*BODY(I)/(SEMI*CL2*(1-ECC2))
            TORB = TWOPI*SQRT(SEMI**3/BODY(I))
            TGR = DABS(DTX*SEMI/DE(3))
+           IF (ECC.LT.1.0D0.AND.SEMI.GT.0.0D0) TGR = TGR0
            RSCHW = 2.0*BODY(I)/CL2
            SEMI1 = SEMI - DE(3)
            ECC1 = ECC - DE(4)
@@ -146,6 +179,12 @@
 				   DH = 0.D0
 			   END IF
 		   END IF 
+*       Bound pair: energy change from the decayed semi-major axis (exact
+*       Kepler relation, so H and SEMI1 stay consistent over many steps).
+           IF (HI.LT.0.D0.AND.SEMI1.GT.0.D0.AND.DE(3).NE.0.D0) THEN
+               DH = -0.5D0*BODY(I)/SEMI1 - HI
+               DE(1) = -ZMU*DH
+           END IF
 		   
            if(rank.eq.0)WRITE(6,665)
      &   TTOT,DTGW(IPAIR),STEP(I1),I,IPAIR,LIST(1,I1),
@@ -230,6 +269,39 @@
         ENDIF
 ********************************************************************+
 *
+*       GR decay of a bound pair: with U = A cos(E/2) + B sin(E/2) and
+*       U'/OMEGA = -A sin(E/2) + B cos(E/2), OMEGA = SQRT(-H/2), scale the
+*       pericentre vector A by SQRT(q1/q0) and the apocentre vector B by
+*       SQRT(Q1/Q0) at the current eccentric anomaly E. This gives SEMI1,
+*       ECC1 exactly at any orbital phase and keeps the KS gauge; the
+*       pericentre scaling below is exact only at pericentre.
+        IF (KSTAR(I).EQ.-25.AND.HI.LT.0.D0) THEN
+            GWEA = ATAN2(TDOT2(IPAIR)/SQRT(SEMI*BODY(I)),
+     &                   1.0D0 - R(IPAIR)/SEMI)
+            GWC = COS(0.5D0*GWEA)
+            GWS = SIN(0.5D0*GWEA)
+            GWA = SQRT(SEMI1*(1.0D0 - ECC1)/(SEMI*(1.0D0 - ECC)))
+            GWB = SQRT(SEMI1*(1.0D0 + ECC1)/(SEMI*(1.0D0 + ECC)))
+            GWOM0 = SQRT(-0.5D0*HI)
+            GWOM1 = SQRT(-0.5D0*H(IPAIR))
+            GWC11 = GWA*GWC**2 + GWB*GWS**2
+            GWC12 = (GWB - GWA)*GWC*GWS
+            GWC22 = GWA*GWS**2 + GWB*GWC**2
+            R(IPAIR) = 0.0D0
+            TD2 = 0.0D0
+            DO 12 K = 1,4
+                GWU = U(K,IPAIR)
+                GWW = UDOT(K,IPAIR)/GWOM0
+                U(K,IPAIR) = GWC11*GWU + GWC12*GWW
+                UDOT(K,IPAIR) = GWOM1*(GWC12*GWU + GWC22*GWW)
+                U0(K,IPAIR) = U(K,IPAIR)
+                R(IPAIR) = R(IPAIR) + U(K,IPAIR)**2
+                TD2 = TD2 + U(K,IPAIR)*UDOT(K,IPAIR)
+   12       CONTINUE
+            TDOT2(IPAIR) = 2.0D0*TD2
+            GO TO 17
+        END IF
+*
 *       Form KS coordinate scaling factor from pericentre ratio.
       C1 = SQRT(PERI1/PERI)
 *
@@ -257,7 +329,7 @@
    15 CONTINUE
 *
 *       Form new perturber list after significant energy loss.
-      NP0 = LIST(1,I1)
+   17 NP0 = LIST(1,I1)
       IF (ABS(SEMI1/SEMI).LT.0.5) THEN
           CALL KSLIST(IPAIR)
 *       Ensure that single perturber differs from #I itself.

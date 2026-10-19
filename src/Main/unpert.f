@@ -9,6 +9,7 @@
       include 'timing.h'
       REAL*8  UI(4),UIDOT(4),A_EIN,CL2
       INTEGER  RES
+      LOGICAL  LGWSKP
 *     Warning!: saved value is unsafe for parallel
       SAVE TCALL
       DATA TCALL /0.0D0/
@@ -22,6 +23,8 @@
       SEMI = -0.5D0*BODY(I)/H(IPAIR)
 *      
       CL2 = CLIGHT**2
+      LBRAKE = .FALSE.
+      LGWSKP = .FALSE.
 *
 *       Add elapsed unperturbed Kepler periods and update the time T0(I1).
       TK = TWOPI*SEMI*SQRT(SEMI/BODY(I))
@@ -109,6 +112,11 @@
               GO TO 30
           END IF
           IR = 1
+*       Keep the GW accounting of a compact pair on this path (KZ(27) > 2).
+          IF (KZ273.EQ.3) THEN
+              LGWSKP = .TRUE.
+              GO TO 21
+          END IF
           GO TO 28
       END IF
 *
@@ -217,7 +225,7 @@
       END IF
 *
 *       Check for GR braking for compact object binaries RSp March 2019
-           HI = H(IPAIR)
+   21      HI = H(IPAIR)
            SEMI = -0.5*BODY(I)/HI
            ECC2 = (1.0-R(IPAIR)/SEMI)**2+TDOT2(IPAIR)**2/(BODY(I)*SEMI)
            ECC = SQRT(ECC2)
@@ -225,23 +233,30 @@
         LBRAKE =KZ273.EQ.3.AND.
      &    KSTAR(I1).GE.10.AND.KSTAR(I1).LE.14.AND.
      &    KSTAR(I2).GE.10.AND.KSTAR(I2).LE.14.AND.
-     &    HI.LT.0.D0.AND.ECC.GT.0.D0
+     &    HI.LT.0.D0.AND.ECC.GE.0.D0
         IF (LBRAKE) THEN
 *       GR breaking for compact obj. define new binary type March 2019
            A_EIN = 3.0*TWOPI*BODY(I)/(SEMI*CL2*(1-ECC2))
            TORB = TWOPI*SQRT(SEMI**3/BODY(I))
-           DTGW(IPAIR) = STEP(I1)
            RSCHW = 2.0*BODY(I)/CLIGHT**2
            RES = 0
            KMIN = 0
+*       Peters interval: time since the last applied decay (TGWREF).
+           DTX = TIME - TGWREF(IPAIR)
+           DTACC = DTX
            CALL GW_DECISION(SEMI,BODY(I1),BODY(I2),
-     &              CLIGHT,ECC,DTGW(IPAIR),RES,TGR,KMIN)
-           STEP(I1) = STEP(I1)/2**KMIN
-           DTGW(IPAIR) = STEP(I1)
-*       Special binary type -25 for GR shrinking binary
+     &              CLIGHT,ECC,DTX,RES,TGR,KMIN)
+*       Special binary type -25 for GR shrinking binary: apply the decay once
+*       it changes a or e by more than 1e-4, otherwise keep accumulating.
            IF(RES.EQ.1) THEN
+*       The type -25 selects the GR branch of KSTIDE only for this call: a
+*       negative c.m. type marks a chaotic binary elsewhere (MDOT, FLYBY).
+              KSTGW = KSTAR(I)
               KSTAR(I) = -25
+*       The whole interval (KSTIDE integrates it in steps).
+              DTGW(IPAIR) = DTACC
               CALL KSTIDE(IPAIR,QPERI)
+              TGWREF(IPAIR) = TIME
       if(rank.eq.0)WRITE(6,665)
      &   RES,KMIN,TTOT,DTGW(IPAIR),STEP(I1),I,IPAIR,LIST(1,I1),
      &   NAME(I1),NAME(I2),NAME(I),KSTAR(I1),KSTAR(I2),KSTAR(I),
@@ -252,16 +267,18 @@
      &   I10,2I6,' NM1,2,S=',3I10,' KW1,2,S=',3I4,' M1,2[M*]',2E13.5,
      &   ' e,a,QP,RS[NB]=',4E13.5,' H, GAMMA=',2E13.5,
      &   ' A_EIN, TORB, TGR(PM)=',3E13.5)
+              KSTAR(I) = KSTGW
            END IF 
-*       Prepare coal flag if PERI < 50 R_SCHW
+*       Coalescence if PERI < 25 R_SCHW or the decay time is below one period.
             SEPMRG = 2.5D1*RSCHW
-            IF(DABS(QPERI).LT.SEPMRG) THEN
+            IF(DABS(QPERI).LT.SEPMRG.OR.TGR.LT.TORB) THEN
               PRINT *,'COLL DUE TO GW UNPERT QPERI CLIGHT RSCH', 
      &                QPERI, CLIGHT, RSCHW 
               IPHASE = -1
               GO TO 30 
            END IF           
         END IF
+        IF (LGWSKP) GO TO 29
 *
 *       Perform general two-body collision test.
       IF (KZ(19).GE.3.AND.NAME(I).GT.0) THEN
@@ -326,6 +343,16 @@ c$$$              IF (IPHASE.LT.0) GO TO 30
               END IF
               CALL SPIRAL(IPAIR)
               IF (IPHASE.LT.0) GO TO 30
+          END IF
+      END IF
+*
+*       Resolve the GW decay of a compact pair: an interval of at most 1 % of
+*       a/|da/dt|, in whole Kepler periods (the unperturbed state is frozen).
+   29 IF (LBRAKE.AND.IPHASE.EQ.0) THEN
+          IF (STEP(I1).GT.1.0D-02*TGR) THEN
+              SEMI = -0.5D0*BODY(I)/H(IPAIR)
+              TK = TWOPI*SEMI*SQRT(SEMI/BODY(I))
+              STEP(I1) = MAX(1.0D0,AINT(1.0D-02*TGR/TK))*TK
           END IF
       END IF
 *

@@ -53,7 +53,7 @@
      &               HDOT4(KMAX),DTAU(KMAX),TDOT2(KMAX),TDOT3(KMAX),
      &               R(KMAX),R0(KMAX),GAMMA(KMAX),SF(7,KMAX),H0(KMAX),
      &               FP0(4,KMAX),FD0(4,KMAX),KBLIST(10*KMAX),
-     &               KSLOW(KMAX),DTGW(KMAX),TBLIST
+     &               KSLOW(KMAX),DTGW(KMAX),TGWREF(KMAX),TBLIST
 *
       REAL*8 CC(265)
       EQUIVALENCE (CC(1),C(1))
@@ -143,7 +143,8 @@
      *    (r(i),i=1,npairs),(r0(i),i=1,npairs),(gamma(i),i=1,npairs),
      *    ((sf(k,i),k=1,7),i=1,npairs),(h0(i),i=1,npairs),((fp0(k,i), 
      *    k=1,4),i=1,npairs),((fd0(k,i),k=1,4),i=1,npairs),
-     *    (kblist(i),i=1,10*npairs),(kslow(i),i=1,npairs),tblist
+     *    (kblist(i),i=1,10*npairs),(kslow(i),i=1,npairs),
+     *    (tgwref(i),i=1,npairs),tblist
 *
         write (IU) (list(1,i),(list(k,i),k=2,list(1,i)+1),i=1,ntot)
 *
@@ -280,7 +281,8 @@
      *    (r(i),i=1,npairs),(r0(i),i=1,npairs),(gamma(i),i=1,npairs),
      *    ((sf(k,i),k=1,7),i=1,npairs),(h0(i),i=1,npairs),((fp0(k,i),
      *    k=1,4),i=1,npairs),((fd0(k,i),k=1,4),i=1,npairs),
-     *    (kblist(i),i=1,10*npairs),(kslow(i),i=1,npairs),tblist
+     *    (kblist(i),i=1,10*npairs),(kslow(i),i=1,npairs),
+     *    (tgwref(i),i=1,npairs),tblist
 *
          read (J) (list(1,i),(list(k,i),k=2,list(1,i)+1),i=1,ntot)
 *
@@ -402,7 +404,9 @@
        CALL MPI_BCAST(KBLIST(1),10*NPAIRS,MPI_INTEGER,0,
      &                                      MPI_COMM_WORLD,ierr)
        CALL MPI_BCAST(KSLOW(1),NPAIRS,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
-       CALL MPI_BCAST(DTGW(1),NPAIRS,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
+       CALL MPI_BCAST(DTGW(1),NPAIRS,MPI_REAL8,0,MPI_COMM_WORLD,ierr)
+       CALL MPI_BCAST(TGWREF(1),NPAIRS,MPI_REAL8,0,MPI_COMM_WORLD,
+     &                                      ierr)
        CALL MPI_BCAST(NAME(1),NTOT,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
 *
            iinl = NTOT
