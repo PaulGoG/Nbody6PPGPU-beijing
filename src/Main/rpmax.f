@@ -13,7 +13,7 @@
 *       Note M1, M2 and DV are in N-body units.
       MB = M1 + M2
       MFAC = (M1*M2)**(2.0/7.0)*MB**(3.0/7.0)
-      CLIGHT = 3.0D+05/VSTAR
+      CLIGHT = 2.99792458D+05/VSTAR
       VFAC = CLIGHT**(10.0/7.0)*DV**(4.0/7.0)
       RPMAX = FAC*MFAC/VFAC
 *

@@ -138,7 +138,7 @@
       IPREV = 0
       ICASE = .FALSE.
       NAMES(NMX,5) = 0
-      CLIGHT = 3.0D+05/VSTAR1
+      CLIGHT = 2.99792458D+05/VSTAR1
       CL2 = CLIGHT**2
       CL5 = CL2**2*CLIGHT
       TWOPI = 8.D0*DATAN(1.D0)
@@ -575,7 +575,7 @@
               FAC = 0.5*(M(J1) + M(J2))/M(J1)
               RCR = 1.7*FAC**0.3333*SIZE(J1)
           ELSE
-              CLIGHT = 3.0D+05/VSTAR1
+              CLIGHT = 2.99792458D+05/VSTAR1
               RCR = 6.0*(M(J1) + M(J2))/CLIGHT**2
           END IF
 *

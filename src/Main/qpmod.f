@@ -283,7 +283,7 @@
 *
 *       Specify constants in N-body units.
       GM = 1.0
-      C = 3.0D+05/VSTAR
+      C = 2.99792458D+05/VSTAR
       FAC = (GM/C**2)**3.5
 *
 *     FE = 1.0 + 73.0/24.0*ECC2 + 37.0/96.0*ECC**4

@@ -8,7 +8,7 @@
 *
 *       Adopt simplified eccentricity factor valid for ECC = 1.
       GE = 425.0*3.1415/(32.0*SQRT(2.0D0))
-      CLIGHT = 3.0D+05/VSTAR
+      CLIGHT = 2.99792458D+05/VSTAR
       FAC = (1.0/CLIGHT)**3.5
 *
 *       Set mass expression for energy change in N-body units.

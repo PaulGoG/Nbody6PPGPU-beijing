@@ -56,7 +56,7 @@
      &     '  SU =',E21.12)
 *
 *       Define relevant parameter for the GR case (RZ = 6*<m>/c^2).
-          CLIGHT = 3.0D+05/VSTAR
+          CLIGHT = 2.99792458D+05/VSTAR
           RZ = 6.0*ZMASS/(FLOAT(N)*CLIGHT**2)
           if(rank.eq.0)
      &    WRITE (6,20)  VSTAR, CLIGHT, RZ
