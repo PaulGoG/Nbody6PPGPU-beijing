@@ -30,6 +30,18 @@ Each is one commit on `campaign`; the tag that first contains it is given in bra
   energy check [v2026.07-campaign.4].
 - `fnfw.f`, `fpowercut.f`: jerk of the NFW halo and of the cut-off power-law bulge of MWPotential2014
   [v2026.07-campaign.4].
+- `ksint.f`, `unpert.f`, `kstide.f`, `impact.f`, `mdot.F` and the pair tables (`common6.h`, `mydump.F`,
+  `ksinit.F`, `ksin2.f`, `remove.f`, `remove_ks.F`, `subint.F`): under KZ(27) > 2 the orbit-averaged
+  gravitational-wave decay of a compact KS pair (Peters 1964, DOI 10.1103/PhysRev.136.B1224) is accumulated
+  from a per-pair clock written to the dump, so decay below a relative change of 10⁻⁴ is no longer discarded and the KS slow-down is included;
+  it is integrated over the accumulated interval in second-order steps and applied at any orbital phase by
+  rescaling the KS pericentre and apocentre vectors, so an unperturbed pair no longer gains eccentricity at
+  each application; the check is no longer skipped on the unperturbed path without perturbers, and
+  unperturbed intervals resolve the decay time. The type −25 is set only while `KSTIDE` applies the decay,
+  so a decaying pair is no longer treated as a chaotic binary; the hard-binary exception of `IMPACT` uses its
+  intended 50 R☉; the BSE look-up no longer applies the same decay a second time [v2026.07-campaign.5].
+- `units.f`, `chain.f`, `qpmod.f`, `rpmin.f`, `rpmax.f`: the speed of light is 299 792.458 km/s instead of
+  3×10⁵ km/s [v2026.07-campaign.5].
 - From upstream `dev`, cherry-picked with their authorship: supernova ghosts removed from neighbour and
   perturber lists in `mdot.F`, ghost guards in `coal.f`, `chterm.f`, `expel.f`, `expel2.f`; `lagr.f`
   cumulative statistics and initialised radii under KZ(8) = 0; the Eggleton IMF exponent in `imf2.f`; HDF5
