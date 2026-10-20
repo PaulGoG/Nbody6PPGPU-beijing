@@ -56,6 +56,9 @@ Each is one commit on `main`; the tag that first contains it is given in bracket
 - `chmod_chain.f`: KZ(26) is restored after the absorption of an inert binary [v2026.07.6].
 - `mix.f`: the `&INSSE` choice of `nsflag` is no longer overwritten with 4 (the delayed supernova
   prescription of Fryer et al. 2012, DOI 10.1088/0004-637X/749/1/91) [v2026.07.6].
+- `search.f`, `intgrt.F`: a body inside a perturbed KS pair, close to its c.m., whose step has collapsed below
+  10⁻⁴ of the c.m. step no longer stalls the block time: SEARCH requests the termination of that pair
+  (`KS TERMINATION INSIDE PAIR`), which INTGRT performs at the end of the block [v2026.07.7].
 - From upstream `dev`, cherry-picked with their authorship: supernova ghosts removed from neighbour and
   perturber lists in `mdot.F`, ghost guards in `coal.f`, `chterm.f`, `expel.f`, `expel2.f`; `lagr.f`
   cumulative statistics and initialised radii under KZ(8) = 0; the Eggleton IMF exponent in `imf2.f`; HDF5
