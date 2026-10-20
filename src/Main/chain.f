@@ -105,6 +105,7 @@
       CALL CHINIT(ISUB)
 *
 *       Initialize diagnostic & COMMON variables.
+      IPRINT = 0
       RCOLL = 100.0
       QPERI = 100.0
       ZMI1 = 100.0
@@ -412,9 +413,12 @@
           STOP
       END IF
 * Temporary Output RSP Sep 2018 updated Nov 2020
-      IF (ABS(STEP)<1.D-14.AND.IPRINT<1000000) THEN
+*       Tiny steps are counted per chain (reset at initialization) and the
+*       first 100 printed; at 10**6 the chain is terminated, not the run,
+*       because a dump with NSUB > 0 cannot be restarted.
+      IF (ABS(STEP)<1.D-14) THEN
           IPRINT = IPRINT + 1
-      IF (rank.eq.0.and.KZ30.GE.2) THEN
+      IF (rank.eq.0.and.KZ30.GE.2.AND.IPRINT.LE.100) THEN
           CALL TRANSX
           KK = 0
           DO 402 K = 1,N-1
@@ -431,8 +435,14 @@
      &           (I4,I10,4E13.5))
           CALL FLUSH(6)
       END IF
+          IF (IPRINT.GE.1000000) THEN
+              if(rank.eq.0)
+     &        WRITE (6,403)  NSTEP1, N, STEP, (1.0/RINV(K),K=1,N-1)
+  403         FORMAT (' ENFORCED CHAIN TINY STEPS:  NSTEP NCH STEP R',
+     &             I10,I4,1P,9E9.1)
+              GO TO 70
+          END IF
       END IF
-      IF (IPRINT.GE.1000000) STOP
 *
 *       Determine two-body distances for stability test and collision search.
       IF (CHTIME.GT.TIME0.AND.JC.EQ.0) THEN
