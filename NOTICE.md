@@ -59,6 +59,9 @@ Each is one commit on `main`; the tag that first contains it is given in bracket
 - `search.f`, `intgrt.F`: a body inside a perturbed KS pair, close to its c.m., whose step has collapsed below
   10⁻⁴ of the c.m. step no longer stalls the block time: SEARCH requests the termination of that pair
   (`KS TERMINATION INSIDE PAIR`), which INTGRT performs at the end of the block [v2026.07.7].
+- `mdot.F`: a mass change of a KS component below 10⁻⁸ N-body mass units is applied with the KS orbit and the
+  c.m. mass corrected and its energy booked (`HCORR`), as larger ones were; before, the binding energy of a hard
+  pair changed by H Δμ without a counterpart at each such step [v2026.07.7].
 - From upstream `dev`, cherry-picked with their authorship: supernova ghosts removed from neighbour and
   perturber lists in `mdot.F`, ghost guards in `coal.f`, `chterm.f`, `expel.f`, `expel2.f`; `lagr.f`
   cumulative statistics and initialised radii under KZ(8) = 0; the Eggleton IMF exponent in `imf2.f`; HDF5
