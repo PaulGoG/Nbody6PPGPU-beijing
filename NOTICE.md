@@ -42,6 +42,18 @@ Each is one commit on `campaign`; the tag that first contains it is given in bra
   intended 50 R☉; the BSE look-up no longer applies the same decay a second time [v2026.07-campaign.5].
 - `units.f`, `chain.f`, `qpmod.f`, `rpmin.f`, `rpmax.f`: the speed of light is 299 792.458 km/s instead of
   3×10⁵ km/s [v2026.07-campaign.5].
+- `impact.f`, `chterm.f`, `induce.f`, `mwpotinit.F`, `verify.f`: five FORMAT statements carry the comma
+  between descriptors that gfortran's run-time format parser requires; with KZ(15) > 0 the first
+  binary–binary chain ended every run [v2026.07-campaign.6].
+- `adjust.F`, `chterm.f`: a run does not end while a triple, quad or chain is active, whose END RUN dump
+  could not be restarted; the subsystem is terminated and the end criterion tested again at the next
+  adjustment (`END RUN DEFERRED`). A dump skipped during a chain is written at its termination also
+  under KZ(2) = 1 [v2026.07-campaign.6].
+- `chain.f`: steps below 10⁻¹⁴ are counted per chain, and the limit of 10⁶ terminates the chain instead
+  of stopping the run without a dump [v2026.07-campaign.6].
+- `chmod_chain.f`: KZ(26) is restored after the absorption of an inert binary [v2026.07-campaign.6].
+- `mix.f`: the `&INSSE` choice of `nsflag` is no longer overwritten with 4 (the delayed supernova
+  prescription of Fryer et al. 2012, DOI 10.1088/0004-637X/749/1/91) [v2026.07-campaign.6].
 - From upstream `dev`, cherry-picked with their authorship: supernova ghosts removed from neighbour and
   perturber lists in `mdot.F`, ghost guards in `coal.f`, `chterm.f`, `expel.f`, `expel2.f`; `lagr.f`
   cumulative statistics and initialised radii under KZ(8) = 0; the Eggleton IMF exponent in `imf2.f`; HDF5
