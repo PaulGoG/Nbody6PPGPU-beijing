@@ -516,7 +516,7 @@ C      TIME = MIN(TBLOCK,TIME)
           IF (rank.eq.0.and.KZ(30).GT.1) THEN
               WRITE (6,90)  I3, I4, NAME(I3), NAME(I4), STEP(NTOT),
      &          STEPR(NTOT), R(NPAIRS), H(NPAIRS), GAMMA(NPAIRS)
-   90         FORMAT (' CHTERM  SECOND BINARY(ICM2)[All in NB]: '
+   90         FORMAT (' CHTERM  SECOND BINARY(ICM2)[All in NB]: ',
      &             'I3 I4 NI3,4 STEP STEPR R12 H GAMMA',4I10,1P,5E10.2)
               call flush(6)
           END IF

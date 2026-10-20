@@ -80,7 +80,7 @@
 *      
          if(rank.eq.0) then
            write (6,85) RG*R_KPC,VG*V_PcMyr,OMEGA,RTIDE*RBAR,EGPOT,EGKIN
- 85        FORMAT (/,12X,'Milky-Way Galaxy potential (Bovy 2015)'
+ 85        FORMAT (/,12X,'Milky-Way Galaxy potential (Bovy 2015)',
      &           '  RG[kpc] =',1P,3E11.4,'  VG[pc/myr] =',3E11.4,
      &           '  OMEGA =',E9.1, '  RTIDE[pc] =',E9.2,
      &           '  POT = ',E11.4, ' KIN = ',E11.4,0P)

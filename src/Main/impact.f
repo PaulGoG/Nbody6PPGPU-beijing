@@ -428,7 +428,7 @@ c$$$      call mpi_barrier(MPI_COMM_WORLD,ierr)
      &                  RIJ, SEMI1, PMIN
    22     FORMAT (' CHAIN B-B    NAME(I1-I4)',4I10,'  K*(INCM)',I3,
      &         '  K*(OCM)',I3,'  ECC0',F6.3,'  ECC1',F6.3,'  SEMI0',
-     &         1P,E11.3'  SEMI2',E11.3,'  RIN3',E11.3,'  SEMI1',E11.3,
+     &         1P,E11.3,'  SEMI2',E11.3,'  RIN3',E11.3,'  SEMI1',E11.3,
      &         '  PERIM',E11.3,0P)
           RT = 4.0*MAX(RADIUS(I1),RADIUS(I2))
           IF (SEMI0.LT.4.0*RT.AND.LIST(1,J1).EQ.0.OR.

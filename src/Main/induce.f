@@ -172,7 +172,7 @@
      &                   KSTAR(I), SEMI, PMIN2, IN, TG, TC, TC2, TPHYS
    25     FORMAT ('INDUCE:  ECC0 ECCMIN ECCMAX K*(I1) K*(I2) K*(ICM) ',
      &         'SEMI0[NB] PERIM[NB] IN TG[Myr] TC[Myr] TCM[Myr] ',
-     &         'Time[Myr]'3F10.5,3I4,1P,2E15.6,0P,I3,1P,3E15.6,
+     &         'Time[Myr]',3F10.5,3I4,1P,2E15.6,0P,I3,1P,3E15.6,
      &         E26.17,0P)
           CALL FLUSH(44)
       END IF

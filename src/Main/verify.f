@@ -12,7 +12,7 @@
           if(rank.eq.0)
      &    WRITE (6,10)  N, NNBMAX, NNBOPT
    10     FORMAT (/,5X,'FATAL ERROR!   BAD INPUT   N =',I10,
-     &                                 ' NNBMAX =',I6' NNBOPT =',I6)
+     &                                 ' NNBMAX =',I6,' NNBOPT =',I6)
           STOP
       END IF
 *
