@@ -374,6 +374,13 @@ C         IF(J.EQ.9951) print*,'L',L,'J',J,'T',TIME
           GO TO 100
       END IF
 *
+*       Terminate the pair (KSPAIR) a stalled body lies inside (SEARCH).
+      IF (IKS.LT.0) THEN
+          TIME = TPREV
+          IPHASE = 2
+          GO TO 100
+      END IF
+*
 *       Check next adjust time before beginning a new block.
       IF (TIME.GT.TADJ) THEN
           TIME = TADJ

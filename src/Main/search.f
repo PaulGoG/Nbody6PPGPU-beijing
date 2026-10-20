@@ -72,6 +72,22 @@ c$$$       end if
           JLIST(NCLOSE) = J
           GO TO 2
       ELSE
+*       A body inside a perturbed pair sees the c.m. as a point mass less the
+*       component corrections; its step can collapse while the pair waits for
+*       its own step, which stalls the block time. Terminate the pair then.
+          JPAIR = J - N
+          IF (RIJ2.LT.R(JPAIR)**2.AND.LIST(1,2*JPAIR-1).GT.0.AND.
+     &        STEP(I).LT.1.0D-04*STEP(J)) THEN
+              KSPAIR = JPAIR
+              JCOMP = I
+              IKS = -1
+              if(rank.eq.0)
+     &        WRITE (6,12)  TIME+TOFF, NAME(I), NAME(J), JPAIR,
+     &                      SQRT(RIJ2), R(JPAIR), STEP(I), STEP(J)
+   12         FORMAT (' KS TERMINATION INSIDE PAIR   TIME[NB]',1P,
+     &               E17.10,' NAME(I),NAME(ICM),IPAIR',3I10,
+     &               ' RIJ,R12[NB]',2E11.3,' STEP(I),STEP(ICM)',2E11.3)
+          END IF
           GO TO 10
       END IF
 *
