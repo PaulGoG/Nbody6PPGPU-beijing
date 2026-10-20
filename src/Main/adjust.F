@@ -14,6 +14,8 @@
 *     INTEGER JHIST,JHISTR
       COMMON/ECHAIN/  ECH
       COMMON/STSTAT/  TINIT,NIR,NIB,NRGL,NKS
+      COMMON/CLUMP/   BODYS(NCMAX,5),T0S(5),TS(5),STEPS(5),RMAXS(5),
+     &                NAMES(NCMAX,5),ISYS(5)
 *      COMMON/BLKLVL/JHIST(0:NMAX),JHISTR(0:NMAX),JHISTU(0:NMAX)
       SAVE  DTOFF
       DATA  DTOFF /100.0D0/
@@ -389,8 +391,17 @@ C     New (Aug.1998) by P.Kroupa: (time also in Myr)
 *     Check termination criteria (TIME > TCRIT & N <= NCRIT).
 *     
 C     New (Aug. 1998): P.Kroupa
-*     
-      IF (TTOT*TSCALE.GT.TCRITp.OR.TTOT.GT.TCRIT - 20.0*DTMIN
+*
+*     No end inside triple, quad or chain regularization: the final dump would
+*     not restart (NSUB > 0). Enforce termination of the subsystems, as INTGRT
+*     does for a stop request, and check again at the next adjustment.
+      IF ((TTOT*TSCALE.GT.TCRITp.OR.TTOT.GT.TCRIT - 20.0*DTMIN
+     &     .OR.N.LE.NCRIT).AND.NSUB.GT.0) THEN
+         STEPS(1:NSUB) = 0.0D0
+         if(rank.eq.0) WRITE (6,64) TTOT, NSUB
+ 64      FORMAT (/,9X,'END RUN DEFERRED   TTOT =',1P,E16.8,
+     &           '  NSUB =',I3)
+      ELSE IF (TTOT*TSCALE.GT.TCRITp.OR.TTOT.GT.TCRIT - 20.0*DTMIN
      &     .OR.N.LE.NCRIT) THEN
 *     Terminate after optional COMMON save.
          if(rank.eq.0) THEN

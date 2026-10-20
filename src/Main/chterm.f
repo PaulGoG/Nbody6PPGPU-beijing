@@ -575,7 +575,7 @@ C      TIME = MIN(TBLOCK,TIME)
       ECH = 0.0
 *
 *       Check for subsystem at last COMMON dump (no restart with NSUB > 0).
-      IF (NSUB.EQ.0.AND.KZ(2).GT.1) THEN
+      IF (NSUB.EQ.0.AND.KZ(2).GE.1) THEN
           IF (TIME - TDUMP.LT.TIMEC) THEN
               TDUMP = TIME
               CALL MYDUMP(1,2)
