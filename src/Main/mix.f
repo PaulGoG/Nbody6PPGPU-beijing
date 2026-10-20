@@ -34,7 +34,6 @@
 *
 * Set maximum NS mass depending on which NS mass prescription is used. 
       mxns = mxns0
-      nsflag = 4
       if(nsflag.ge.1) mxns = mxns1
 *
 *       Define global indices with body #I1 being most evolved.
