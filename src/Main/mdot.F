@@ -1039,7 +1039,9 @@ c$$$            end if
 *                  IGPUSWITCH = .true.
 *#endif                  
                   KS = 1
-               ELSE IF (DABS(DM).GT.DMMIN) THEN
+*       Any mass change of a KS component: DMMIN bounds the relative
+*       change above, not the absolute one in N-body units.
+               ELSE IF (DM.NE.0.0D0) THEN
 *       Implement mass loss and expand KS orbit at constant eccentricity.
                   CALL HCORR(I,DM,RNEW)
                   ITRY = 1
