@@ -242,7 +242,11 @@
         IF (LBRAKE) THEN
 *       GR breaking for compact obj. define new binary type March 2019
            A_EIN = 3.0*TWOPI*BODY(I)/(SEMI*CL2*(1-ECC2))
-           TORB = TWOPI*SQRT(SEMI**3/BODY(I))
+           IF (SEMI.GT.0.D0) THEN
+              TORB = TWOPI*SQRT(SEMI**3/BODY(I))
+           ELSE
+              TORB = 0.0D0
+           END IF
            RSCHW = 2.0*BODY(I)/CL2
            RES = 0
 *
@@ -256,17 +260,20 @@
 *    &   ' e,a,QP,RS[NB]=',4E13.5,' H, GAMMA=',2E13.5,
 *    &   ' A_EIN, TORB=',2E13.5)
 *
-*       Peters interval: for a bound pair the time since the last applied
-*       decay (TGWREF; global time, so KS slow-down is included), for a
-*       hyperbolic pair the current step.
+*       Peters interval: the time since the last applied decay (TGWREF;
+*       global time, so KS slow-down is included). A hyperbolic pair has
+*       no orbit-averaged decay: an NS/BH pair loses the energy of one
+*       passage at each pericentre (GWCAPT), the merger test stays.
            IF (HI.LT.0.D0) THEN
               DTX = TIME - TGWREF(IPAIR)
+              DTACC = DTX
+              CALL GW_DECISION(SEMI,BODY(I1),BODY(I2),
+     &            CLIGHT,ECC,DTX,RES,TGR,KMIN)
            ELSE
-              DTX = STEP(I1)
+              RES = 0
+              KMIN = 0
+              TGR = 1.0D+30
            END IF
-           DTACC = DTX
-           CALL GW_DECISION(SEMI,BODY(I1),BODY(I2),
-     &         CLIGHT,ECC,DTX,RES,TGR,KMIN)
 *
 *       Special binary type -25 for GR shrinking binary: apply the decay once
 *       it changes a or e by more than 1e-4, otherwise keep accumulating.
@@ -395,6 +402,15 @@ c$$$          END IF
               ECC2 = (1.0-RI/SEMI)**2+TDOT2(IPAIR)**2/(SEMI*BODY(I))
               QPERI = SEMI*(1.0D0 - SQRT(ECC2))
               DMIN2 = MIN(DMIN2,QPERI)
+*
+*       Radiated energy of the passage for an NS/BH pair (KZ(27) = 3 at
+*       input): capture when it exceeds the orbital energy.
+              IF (KZ273.EQ.3.AND.KSTAR(I).GE.0.AND.
+     &            KSTAR(I1).GE.13.AND.KSTAR(I1).LE.14.AND.
+     &            KSTAR(I2).GE.13.AND.KSTAR(I2).LE.14) THEN
+                  CALL GWCAPT(IPAIR,QPERI)
+                  GO TO 100
+              END IF
 *
 *       Check optional tidal interaction or stellar collision.
               IF (KZ(19).GE.3.AND.KSTAR(I).LT.10) THEN
@@ -840,4 +856,116 @@ c$$$      print*,rank,'rmax',rmax
 *
       RETURN 
    
+      END
+*
+*
+      SUBROUTINE GWCAPT(IPAIR,QPERI)
+*
+*
+*       Gravitational radiation of a hyperbolic NS/BH passage.
+*       ------------------------------------------------------
+*
+*       Energy radiated in one passage of the Keplerian hyperbola with
+*       pericentre Q and eccentricity E at quadrupole order (Hansen,
+*       Phys. Rev. D 5, 1021, 1972; Turner, ApJ 216, 610, 1977):
+*         DEGW = 2/45 M1**2 M2**2 SQRT(M) F(E) / (C**5 (Q(1+E))**3.5),
+*         F(E) = 3(96 + 292 E**2 + 37 E**4) ACOS(-1/E)
+*                + (673 E**2 + 602) SQRT(E**2 - 1),
+*       F(1) = 1275 PI being the parabolic value of Quinlan & Shapiro
+*       (ApJ 343, 725, 1989; routine RPMAX). At the pericentre (KSPERI)
+*       H is lowered by DEGW/MU at fixed U, which keeps the pericentre
+*       distance; the angular momentum loss would change it by a relative
+*       O((R_S/Q)**2.5), not applied. The pair is captured when DEGW
+*       exceeds MU*H; its orbit-averaged decay (KSINT, UNPERT) then runs
+*       from the pericentre time.
+*
+      INCLUDE 'common6.h'
+      REAL*8  ZMU,HI,H1,SEMI,QP,EM1,ECC,FE,DEGW,UPR2,C2,TD2,
+     &        RCAP,VINF,ONEME1,RPMAX
+      CHARACTER*10  WHICH
+*
+      I1 = 2*IPAIR - 1
+      I2 = I1 + 1
+      I = N + IPAIR
+      HI = H(IPAIR)
+      IF (HI.LE.0.0D0) GO TO 30
+      ZMU = BODY(I1)*BODY(I2)/BODY(I)
+*
+*       Estimate from the osculating pericentre; skip a change of the
+*       orbital energy below 1e-4 (no move to the pericentre).
+      QP = QPERI
+      DO 5 ITER = 1,2
+          SEMI = -0.5D0*BODY(I)/HI
+          EM1 = -QP/SEMI
+          ECC = 1.0D0 + EM1
+          FE = 3.0D0*(96.0D0 + 292.0D0*ECC**2 + 37.0D0*ECC**4)*
+     &         ACOS(-1.0D0/ECC) +
+     &         (673.0D0*ECC**2 + 602.0D0)*SQRT(EM1*(2.0D0 + EM1))
+          DEGW = 2.0D0/45.0D0*(BODY(I1)*BODY(I2))**2*SQRT(BODY(I))*
+     &           FE/(CLIGHT**5*(QP*(2.0D0 + EM1))**3.5D0)
+          IF (ITER.EQ.2) GO TO 5
+          IF (DEGW.LT.1.0D-04*ZMU*HI) GO TO 30
+*       Move the KS variables to the pericentre (TIME and T0 follow).
+          CALL KSPERI(IPAIR)
+          QP = R(IPAIR)
+    5 CONTINUE
+*
+*       Lower H at fixed U and rescale U' to the KS energy relation.
+      H1 = HI - DEGW/ZMU
+      UPR2 = 0.0D0
+      DO 10 K = 1,4
+          UPR2 = UPR2 + UDOT(K,IPAIR)**2
+   10 CONTINUE
+      C2 = SQRT(0.5D0*(BODY(I) + H1*R(IPAIR))/UPR2)
+      H(IPAIR) = H1
+      TD2 = 0.0D0
+      DO 15 K = 1,4
+          UDOT(K,IPAIR) = C2*UDOT(K,IPAIR)
+          U0(K,IPAIR) = U(K,IPAIR)
+          TD2 = TD2 + 2.0D0*U(K,IPAIR)*UDOT(K,IPAIR)
+   15 CONTINUE
+      TDOT2(IPAIR) = TD2
+*
+*       Book the radiated energy as the other GR paths do (KSTIDE).
+      ECOLL = ECOLL + DEGW
+      E(10) = E(10) + DEGW
+      EGRAV = EGRAV + DEGW
+*
+*       New perturbers for a captured pair; start its GW clock.
+      IF (H1.LT.0.0D0) THEN
+          WHICH = 'GR CAPTURE'
+          NP0 = LIST(1,I1)
+          CALL KSLIST(IPAIR)
+          IF (NP0.EQ.0.AND.LIST(1,I1).GT.0) THEN
+              IF (LIST(2,I1).EQ.I) LIST(2,I1) = IFIRST
+          END IF
+          TGWREF(IPAIR) = TIME
+      ELSE
+          WHICH = 'GR FLYBY'
+      END IF
+*
+*       Re-initialize the KS polynomials at the pericentre (also without
+*       perturbers: the force polynomial holds H).
+      T0(I1) = TIME
+      CALL RESOLV(IPAIR,1)
+      CALL KSPOLY(IPAIR,KSLOW(IPAIR))
+*       T'' >= 0 after KSPOLY, else the next step detects this pericentre
+*       again (as in KSTIDE).
+      IF (TDOT2(IPAIR).LT.0.0D0) TDOT2(IPAIR) = 0.0D0
+*
+*       Stamped line: ONEME1 = Q/A1 = 1 - E1 (< 0 if still hyperbolic).
+      VINF = SQRT(2.0D0*HI)*VSTAR
+      RCAP = RPMAX(BODY(I1),BODY(I2),VSTAR,SQRT(2.0D0*HI),QP)
+      ONEME1 = -2.0D0*QP*H1/BODY(I)
+      IF (rank.eq.0) WRITE (6,20)  WHICH, TIME+TOFF, NAME(I1),
+     &    NAME(I2), KSTAR(I1), KSTAR(I2), BODY(I1)*ZMBAR,
+     &    BODY(I2)*ZMBAR, VINF, EM1, QP, RCAP, DEGW, HI, H1, ONEME1,
+     &    LIST(1,I1)
+   20 FORMAT (1X,A10,' T[NB]',1P,E17.10,' NM1,2=',2I10,' KW1,2=',2I4,
+     &        ' M1,2[M*]',2E12.4,' VINF[km/s]',E12.4,' E-1',E15.7,
+     &        ' QP,RCAP[NB]',E15.7,E12.4,' DE[NB]',E15.7,' H0,H1[NB]',
+     &        2E15.7,' 1-E1',E15.7,' NP',I6)
+*
+   30 RETURN
+*
       END
