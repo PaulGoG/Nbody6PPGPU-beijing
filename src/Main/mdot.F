@@ -1065,6 +1065,10 @@ c$$$            end if
 *                  IGPUSWITCH = .true.
 *#endif             
                   GO TO 1
+*       A smaller change of a component of the merged pair: KS orbit and
+*       c.m. mass corrected and the energy booked, as for a KS pair.
+               ELSE IF (DM.NE.0.0D0.AND.NAME(I).LE.NZERO) THEN
+                  CALL HCORR(I,DM,RNEW)
                END IF
             END IF
          END IF
