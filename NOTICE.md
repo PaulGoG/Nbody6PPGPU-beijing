@@ -62,6 +62,12 @@ Each is one commit on `main`; the tag that first contains it is given in bracket
 - `mdot.F`: a mass change of a KS component below 10⁻⁸ N-body mass units is applied with the KS orbit and the
   c.m. mass corrected and its energy booked (`HCORR`), as larger ones were; before, the binding energy of a hard
   pair changed by H Δμ without a counterpart at each such step [v2026.07.7].
+- `ksint.f`: under KZ(27) > 2 a hyperbolic KS pair of two neutron stars or black holes loses at each
+  pericentre the quadrupole energy of one Keplerian passage (Hansen 1972, DOI 10.1103/PhysRevD.5.1021;
+  Turner 1977, DOI 10.1086/155501), applied at the pericentre at fixed pericentre distance, and is captured
+  when it exceeds the orbital energy (`GR CAPTURE`, `GR FLYBY` lines); before, these pairs received the
+  orbit-averaged rate of a bound orbit at every step, and the capture branch used stellar radii, under which
+  two black holes were never captured [v2026.07.8].
 - From upstream `dev`, cherry-picked with their authorship: supernova ghosts removed from neighbour and
   perturber lists in `mdot.F`, ghost guards in `coal.f`, `chterm.f`, `expel.f`, `expel2.f`; `lagr.f`
   cumulative statistics and initialised radii under KZ(8) = 0; the Eggleton IMF exponent in `imf2.f`; HDF5
