@@ -1,3 +1,16 @@
+> This is my fork of [nbody6ppgpu/Nbody6PPGPU-beijing](https://github.com/nbody6ppgpu/Nbody6PPGPU-beijing),
+> maintained for [Nbody6Dynamics.jl](https://github.com/PaulGoG/Nbody6Dynamics.jl). The branch `main` carries the
+> corrections listed in [`NOTICE.md`](NOTICE.md) on top of upstream release v2026.07, tagged `v2026.07.N`
+> (current: `v2026.07.9`):
+>
+> ```bash
+> git clone -b v2026.07.9 https://github.com/PaulGoG/Nbody6PPGPU-beijing
+> ```
+>
+> The text below is upstream's README. Where it disagrees with `NOTICE.md`, `NOTICE.md` describes this fork: the
+> default branch is `main` (not `stable`), the thread limits are 512 and 1024 (not 32), and the autotest badge
+> refers to upstream's workflow.
+
 [![autotest status](https://github.com/nbody6ppgpu/Nbody6PPGPU-beijing/actions/workflows/autotest.yml/badge.svg)](https://github.com/nbody6ppgpu/Nbody6PPGPU-beijing/actions/workflows/autotest.yml)
 [![Paper](https://badgen.net/badge/NASA%20ads/1999PASP..111.1333A/blue?icon=https://ui.adsabs.harvard.edu/styles/img/transparent_logo.svg)](https://ui.adsabs.harvard.edu/abs/1999PASP..111.1333A/abstract)
 [![Paper](https://badgen.net/badge/NASA%20ads/1999JCoAM.109..407S/blue?icon=https://ui.adsabs.harvard.edu/styles/img/transparent_logo.svg)](https://ui.adsabs.harvard.edu/abs/1999JCoAM.109..407S/abstract)

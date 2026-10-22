@@ -11,7 +11,8 @@ and not kept in sync. Pull requests upstream follow once the corrections have be
 
 ## Corrections on this branch
 
-Each is one commit on `main`; the tag that first contains it is given in brackets.
+Each is one commit on `main`; the tag that first contains it is given in brackets (`v2026.07-campaign.6` holds
+the same source as `v2026.07.6`).
 
 - `escape.F`: a step with more than 1000 escapers no longer ends the run with a format error [v2026.07-campaign.1].
 - `energy.F`, `energy_mpi.F`: under a linearised external field (KZ(14) = 1, 2) the potential energy of the
@@ -41,7 +42,9 @@ Each is one commit on `main`; the tag that first contains it is given in bracket
   each application; the check is no longer skipped on the unperturbed path without perturbers, and
   unperturbed intervals resolve the decay time. The type −25 is set only while `KSTIDE` applies the decay,
   so a decaying pair is no longer treated as a chaotic binary; the hard-binary exception of `IMPACT` uses its
-  intended 50 R☉; the BSE look-up no longer applies the same decay a second time [v2026.07-campaign.5].
+  intended 50 R☉; the BSE look-up no longer applies the same decay a second time; the per-pair interval is
+  broadcast as a real in `mydump.F` (it was sent as an integer) and `mdot.F` guards the decay times against
+  a vanishing rate [v2026.07-campaign.5].
 - `units.f`, `chain.f`, `qpmod.f`, `rpmin.f`, `rpmax.f`: the speed of light is 299 792.458 km/s instead of
   3×10⁵ km/s [v2026.07-campaign.5].
 - `impact.f`, `chterm.f`, `induce.f`, `mwpotinit.F`, `verify.f`: five FORMAT statements carry the comma
@@ -71,10 +74,23 @@ Each is one commit on `main`; the tag that first contains it is given in bracket
 - `mdot.F`: a mass change below 10⁻⁸ N-body units of a component of a KS pair whose centre of mass is a
   merged hierarchy is applied with the KS orbit corrected and its energy booked, as in other KS pairs
   [v2026.07.8].
+- `intgrt.F`: a merged hierarchy terminated by SEARCH (a stalled body inside it) is restored by `RESET`, as at
+  the KSINT terminations of such pairs; before, `KSTERM` orphaned the merger entry and the inner ghost [v2026.07.9].
+- `offset.f`, `ksint.f`, `unpert.f`: the time offset (KZ(35) > 0) also shifts the reference epochs of the KS
+  gravitational-wave decay, which otherwise ran backwards over a negative interval after the first offset; the
+  interval is clipped at zero [v2026.07.9].
+- `ksint.f`: the KS slow-down factor is applied once in a step whose polynomials the GW decay re-initialised
+  (it was applied twice) [v2026.07.9].
+- `roche.f`: under KZ(27) > 2 a pair of compact components in mass transfer does not receive the GW decay of the
+  look-up in addition to the one integrated in KSINT and UNPERT [v2026.07.9].
+- `chain.f`: the tiny-step diagnostic format takes the ten reals of a ten-member chain [v2026.07.9].
+- `hrplot.F`: the second component of a KS pair in `bev.82` is evolved with its own main-sequence time (it took
+  the first component's) [v2026.07.9].
 - From upstream `dev`, cherry-picked with their authorship: supernova ghosts removed from neighbour and
   perturber lists in `mdot.F`, ghost guards in `coal.f`, `chterm.f`, `expel.f`, `expel2.f`; `lagr.f`
   cumulative statistics and initialised radii under KZ(8) = 0; the Eggleton IMF exponent in `imf2.f`; HDF5
-  handle leaks in `custom_output_facility.F` [v2026.07-campaign.3].
+  handle leaks in `custom_output_facility.F`, with the upstream test `tests/test_lagr_cumulative.py`
+  [v2026.07-campaign.3].
 
 ## Credit
 
