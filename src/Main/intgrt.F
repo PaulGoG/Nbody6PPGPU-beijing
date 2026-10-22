@@ -378,6 +378,8 @@ C         IF(J.EQ.9951) print*,'L',L,'J',J,'T',TIME
       IF (IKS.LT.0) THEN
           TIME = TPREV
           IPHASE = 2
+*       A merged hierarchy is restored by RESET, as at KSINT terminations.
+          IF (NAME(N+KSPAIR).LT.0) IPHASE = 7
           GO TO 100
       END IF
 *
