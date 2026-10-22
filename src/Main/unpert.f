@@ -242,7 +242,7 @@
            RES = 0
            KMIN = 0
 *       Peters interval: time since the last applied decay (TGWREF).
-           DTX = TIME - TGWREF(IPAIR)
+           DTX = MAX(TIME - TGWREF(IPAIR),0.0D0)
            DTACC = DTX
            CALL GW_DECISION(SEMI,BODY(I1),BODY(I2),
      &              CLIGHT,ECC,DTX,RES,TGR,KMIN)

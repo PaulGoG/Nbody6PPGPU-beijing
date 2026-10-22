@@ -226,6 +226,8 @@
       END IF
 *
       DTAU(IPAIR) = DTU
+*       KSGWP = 1 when the GW decay re-initialised the KS polynomials.
+      KSGWP = 0
 *
 *       GR braking for compact object binaries RSp 2019/2022
       SEMI = -0.5*BODY(I)/HI
@@ -265,7 +267,7 @@
 *       no orbit-averaged decay: an NS/BH pair loses the energy of one
 *       passage at each pericentre (GWCAPT), the merger test stays.
            IF (HI.LT.0.D0) THEN
-              DTX = TIME - TGWREF(IPAIR)
+              DTX = MAX(TIME - TGWREF(IPAIR),0.0D0)
               DTACC = DTX
               CALL GW_DECISION(SEMI,BODY(I1),BODY(I2),
      &            CLIGHT,ECC,DTX,RES,TGR,KMIN)
@@ -285,7 +287,10 @@
 *       A bound pair takes the whole interval (KSTIDE integrates it in steps).
               IF (HI.LT.0.D0) DTX = DTACC
               DTGW(IPAIR) = DTX
+              STGW = STEP(I1)
               CALL KSTIDE(IPAIR,QPERI)
+*       KSPOLY in KSTIDE sets the step with the slow-down factor included.
+              IF (STEP(I1).NE.STGW) KSGWP = 1
               IF (HI.LT.0.D0) TGWREF(IPAIR) = TIME
       if(rank.eq.0)WRITE(6,665)
      &   RES,KMIN,TTOT,DTGW(IPAIR),STEP(I1),I,IPAIR,LIST(1,I1),
@@ -316,7 +321,7 @@
       ZMOD = 0
       IF (IMOD.GT.1) THEN
           ZMOD = FLOAT(ISLOW(IMOD))
-          STEP(I1) = ZMOD*STEP(I1)
+          IF (KSGWP.EQ.0) STEP(I1) = ZMOD*STEP(I1)
       END IF
 *
 *       Check diagnostic print option.

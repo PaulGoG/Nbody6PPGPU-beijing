@@ -35,6 +35,10 @@
           T0S(I) = T0S(I) - DTOFF
           TS(I) = TS(I) - DTOFF
    20 CONTINUE
+*       Reference epochs of the KS GW decay (KSINT, UNPERT).
+      DO 25 K = 1,NPAIRS
+          TGWREF(K) = TGWREF(K) - DTOFF
+   25 CONTINUE
 *
 *       See whether more reductions are needed.
       IF (TIME.GE.DTOFF) GO TO 1
