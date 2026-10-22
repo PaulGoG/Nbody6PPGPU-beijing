@@ -439,7 +439,7 @@
               if(rank.eq.0)
      &        WRITE (6,403)  NSTEP1, N, STEP, (1.0/RINV(K),K=1,N-1)
   403         FORMAT (' ENFORCED CHAIN TINY STEPS:  NSTEP NCH STEP R',
-     &             I10,I4,1P,9E9.1)
+     &             I10,I4,1P,10E9.1)
               GO TO 70
           END IF
       END IF
