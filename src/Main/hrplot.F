@@ -124,7 +124,7 @@
               KW2 = KSTAR(J2)
               AGE = MAX(TPLOT,TEV0(J2))*TSTAR - EPOCH(J2)
               CALL STAR(KW2,M0,M2,TM2,TN,TSCLS,LUMS,GB,ZPARS)
-              CALL HRDIAG(M0,AGE,M2,TM,TN,TSCLS,LUMS,GB,ZPARS,
+              CALL HRDIAG(M0,AGE,M2,TM2,TN,TSCLS,LUMS,GB,ZPARS,
      &                    RM2,LUM2,KW2,MC2,RCC2,ME2,RE2,K2)
 *       Changed to output in physical units [pc] (RSp Dec25).
                RI = SQRT(RI)*RBAR
