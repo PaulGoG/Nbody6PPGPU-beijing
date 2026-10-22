@@ -897,6 +897,14 @@
 *
          call cputim(ttgr5)
          CALL GRRAD(MASS(1),MASS(2),SEP,ECC,JORB,DJGR,DELET1)
+*       Under KZ(27) > 2 KSINT and UNPERT integrate the GW decay of a
+*       compact pair; ROCHE does not apply it a second time.
+         IF (KZ273.EQ.3.AND.
+     &       KSTAR(J1).GE.10.AND.KSTAR(J1).LE.14.AND.
+     &       KSTAR(J2).GE.10.AND.KSTAR(J2).LE.14) THEN
+            DJGR = 0.0D0
+            DELET1 = 0.0D0
+         END IF
          call cputim(ttgr6)
          if(rank.eq.0)ttgrrad = ttgrrad + (ttgr6-ttgr5)*60.
          if(rank.eq.0)igrrad = igrrad + 1
@@ -1378,6 +1386,12 @@
 * Include gravitational radiation.
          call cputim(ttgr11)
             CALL GRRAD(MASS(1),MASS(2),SEP,ECC,JORB,DJGR,DELET1)
+            IF (KZ273.EQ.3.AND.
+     &          KSTAR(J1).GE.10.AND.KSTAR(J1).LE.14.AND.
+     &          KSTAR(J2).GE.10.AND.KSTAR(J2).LE.14) THEN
+               DJGR = 0.0D0
+               DELET1 = 0.0D0
+            END IF
          call cputim(ttgr12)
          if(rank.eq.0)ttgrrad = ttgrrad + (ttgr12-ttgr11)*60.
          if(rank.eq.0)igrrad = igrrad + 1
