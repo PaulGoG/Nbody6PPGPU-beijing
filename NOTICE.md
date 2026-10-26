@@ -93,6 +93,13 @@ the same source as `v2026.07.6`).
   before it at the new rate (up to 10³ times larger) and brought the merger forward by up to that interval. Three
   per-pair arrays (`GWDA`, `GWDE`, `TGWCHK`) join `COMMON/PAIRS/`, the restart dump and the MPI exchange: a dump
   written by an earlier tag cannot be restarted with this one [v2026.07.10].
+- `rmesc_tlist.f`: at the removal of an escaper the last index of every step level is moved into the hole left in
+  the block-step list unconditionally; the former guard compared the hole position with the level number and, when
+  the two coincided (the escaper among the smallest-step particles, a freshly kicked remnant), left a stale copy of a
+  moved index in the list. The duplicated particle was then corrected twice per regular block, once with a zero
+  step, its force derivatives became infinite and the run spun in `CORE` without output. `regcor_gpu.F` now stops
+  on a zero regular step and `core.f` after 64 cutoff expansions or a non-finite cutoff, so that a corrupted state
+  ends the run at once [v2026.07.10].
 - From upstream `dev`, cherry-picked with their authorship: supernova ghosts removed from neighbour and
   perturber lists in `mdot.F`, ghost guards in `coal.f`, `chterm.f`, `expel.f`, `expel2.f`; `lagr.f`
   cumulative statistics and initialised radii under KZ(8) = 0; the Eggleton IMF exponent in `imf2.f`; HDF5
