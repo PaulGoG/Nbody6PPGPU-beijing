@@ -15,8 +15,10 @@
       RCORE2 = RSCALE**2
       IF (TIME.GT.0.0D0) RCORE2 = MAX(9.0D0*RC**2,RCORE2)
 *
-*       Select > N/5 central particles.
-*       Initialize neighbour densities of all singles and c.m.
+*       Select > N/5 central particles (the cutoff grows by 1.5 per pass;
+*       a non-finite cutoff or more than 64 passes means a corrupted
+*       state, which otherwise spins here without output).
+      NCUT = 0
     5 NC = 0
       DO 10 I = IFIRST,NTOT
           RHO(I) = 0.D0
@@ -30,6 +32,14 @@
 *
 
       IF (NC.LT.N/5) THEN
+          NCUT = NCUT + 1
+          IF (NCUT.GT.64.OR..NOT.(RCORE2.GE.0.0D0)) THEN
+              if(rank.eq.0) write(6,*) 'CORE: cutoff expansion failed',
+     &            ' TIME RCORE2 RSCALE RC NC N = ',TIME,RCORE2,RSCALE,
+     &            RC,NC,N
+              call flush(6)
+              call abort()
+          END IF
           RCORE2 = 1.5*RCORE2
           GO TO 5
       END IF

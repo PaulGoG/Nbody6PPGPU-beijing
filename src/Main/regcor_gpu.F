@@ -443,6 +443,14 @@ C$$$      FD(3) = FD(3) + (DV(3) - A3*DRDP)*DR3I
          DFD(3) = DFD(3) + (DV(3) - A3*DRDP)*DR3I
       END DO
 *      
+*       A regular step of zero length (a duplicated block-step index) makes
+*       the corrector infinite (DT6 = 6/DTR**3): stop with the state.
+      IF (DTR.LE.0.0D0) THEN
+          if(rank.eq.0) write(6,*) 'REGCOR_GPU: DTR <= 0  I NAME TIME',
+     &        ' T0R DTR = ',I,NAME(I),TIME,T0R(I),DTR
+          call flush(6)
+          call abort()
+      END IF
       DTSQ = DTR**2
       DT6 = 6.0/(DTR*DTSQ)
       DT2 = 2.0/DTSQ

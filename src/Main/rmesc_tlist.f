@@ -52,14 +52,18 @@ C               NXTLST(NDTK(K-1)) = NXTLST(NDTK(K-1)) - 1
             END IF
             NDTK(K) = NDTK(K) - 1
             DO LK = K-1,NDTMIN,-1
-*     Shift last index position to beginning of level L
-               IF(NDTK(LK+1)+1.NE.LK) THEN
-                  NXTLST(NDTK(LK+1)+1) = NXTLST(NDTK(LK))
-*     Avoid the missing -1 if the removed one is the ending of level
-                  IF(L.EQ.NDTK(LK+1)+1.AND.NXTLST(L).GT.I) THEN
-                     NXTLST(L) = NXTLST(L)-1
-                  END IF
-               END IF 
+*     Move the last index of level LK into the hole at the start of its
+*     range (a self-assignment for an empty level). The former guard
+*     compared the hole position with the level number and, when the two
+*     coincided, left a stale copy of the moved index in the list: the
+*     particle was then corrected twice per regular block, once with a
+*     zero step, and its force derivatives became infinite.
+               NXTLST(NDTK(LK+1)+1) = NXTLST(NDTK(LK))
+*     The hole at the removed position L is not scanned again: apply the
+*     index shift here (the other holes lie beyond L and are scanned).
+               IF(L.EQ.NDTK(LK+1)+1.AND.NXTLST(L).GT.I) THEN
+                  NXTLST(L) = NXTLST(L)-1
+               END IF
 *     Reduce step level L position by one
                NDTK(LK) = NDTK(LK) - 1
             END DO
