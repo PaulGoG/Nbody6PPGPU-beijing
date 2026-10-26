@@ -157,7 +157,7 @@
           if(rank.eq.0)CALL FILE_INIT
 *
 *       Find massive back hole after restart
-          IF (KZ(24).EQ.1) call IMBHRESTART
+          IF (KZ(24).EQ.1.OR.KZ(24).EQ.3) call IMBHRESTART
 
       END IF
 *

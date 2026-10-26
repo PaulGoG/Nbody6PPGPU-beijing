@@ -5,28 +5,15 @@
 *       ----------------------------------
 *
       INCLUDE 'common6.h'
-*      COMMON/IMBH/ BIMBH,DTBH,NIMBH
-      INTEGER IBH
-      REAL*8 TBH,RREL(3),VREL(3),RAVE(3),VAVE(3),VSIGMA(3)
-      REAL*8 MT,DEN,RIJMAX
-      LOGICAL LOOP_FLAG
-      CHARACTER*8 WHICH
-      SAVE TBH,IBH
-      DATA TBH,IBH/0.0,-1/
+      INTEGER IBHS(16)
+      REAL*8 TBH
+      SAVE TBH,IBHS,IHEAD
+      DATA TBH,IBHS,IHEAD/0.0,16*-1,0/
 *
-*     Reset TBH after restart.
-      IF (TBH.EQ.0.D0.AND.TIME+TOFF.NE.0.D0.AND.KSTART.GT.1) 
+      IF (TBH.EQ.0.D0.AND.TIME+TOFF.NE.0.D0.AND.KSTART.GT.1)
      &     TBH = INT(TIME/DTBH)*DTBH + TOFF
-*     --07/02/14 17:25-lwang-debug--------------------------------------*
-***** Note:------------------------------------------------------------**
-C      TBH = 8.25
-*     --07/02/14 17:25-lwang-end----------------------------------------*
-
-*     IF not reach next output time, return
       IF (TBH.GT.TIME+TOFF) RETURN
-*     
-*     Output labels
-      IF(IBH.EQ.-1.and.KSTART.EQ.1.and.rank.eq.0) then
+      IF(IHEAD.EQ.0.and.KSTART.EQ.1.and.rank.eq.0) then
          write(45,*)'     STAT         Time[Myr]                 IBH',
      &        '         X(1)[PC]                   X(2)[PC]        ',
      &        '         X(3)[PC]                  V(1)[km/s]       ',
@@ -36,18 +23,44 @@ C      TBH = 8.25
      &        '       VAVE(1)[km/s]             VAVE(2)[km/s]      ',
      &        '       VAVE(3)[km/s]             DEN[M*/PC^3]       ',
      &        '       RIJMAX[PC]            VSIGMA(1)[km^2/s^2]    ',
-     &        '   VSIGMA(2)[km^2/s^2]       VSIGMA(3)[km^2/s^2]    '
+     &        '   VSIGMA(2)[km^2/s^2]       VSIGMA(3)[km^2/s^2]    ',
+     &        '   NAME'
       END IF
+      IHEAD = 1
 *
-*     Search for massive black hole
-      IF(IBH.EQ.-1) IBH = NIMBH
-      IF(IBH.GE.1.AND.NAME(IBH).EQ.NIMBH) GO TO 1 
+*     One record per massive black hole of the list (KZ(24) = 1: one).
+      DO K = 1,NIMBHS
+         IF (IBHS(K).EQ.-1) IBHS(K) = NAMEBH(K)
+         CALL BHPLOT1(NAMEBH(K),IBHS(K))
+      END DO
+      TBH = TBH + DTBH
+*
+      RETURN
+*
+      END
+
+***** Note:------------------------------------------------------------**
+
+      SUBROUTINE BHPLOT1(NMBH,IBH)
+*
+*
+*     Record of one massive black hole: NMBH its name, IBH the cached
+*     index (updated when the particle has moved in the arrays).
+*
+      INCLUDE 'common6.h'
+      INTEGER NMBH,IBH
+      REAL*8 RREL(3),VREL(3),RAVE(3),VAVE(3),VSIGMA(3)
+      REAL*8 MT,DEN,RIJMAX
+      LOGICAL LOOP_FLAG
+      CHARACTER*8 WHICH
+*
+      IF(IBH.GE.1.AND.NAME(IBH).EQ.NMBH) GO TO 1 
 *     
 *     Search index of IMBH
       IF(ABS(N-IBH).GT.ABS(IFIRST-IBH)) THEN
          IBH = 0
          DO K = 1,N
-            IF (NAME(K).EQ.NIMBH) THEN
+            IF (NAME(K).EQ.NMBH) THEN
                IBH = K
                GO TO 1
             END IF
@@ -55,7 +68,7 @@ C      TBH = 8.25
       ELSE
          IBH = 0
          DO K = N,1,-1
-            IF (NAME(K).EQ.NIMBH) THEN
+            IF (NAME(K).EQ.NMBH) THEN
                IBH = K
                GO TO 1
             END IF
@@ -63,7 +76,7 @@ C      TBH = 8.25
       END IF
 *
 c$$$      if(rank.eq.0) then
-c$$$         print*,'BH not found! N',NIMBH
+c$$$         print*,'BH not found! N',NMBH
 c$$$         call flush(6)
 c$$$         stop
 c$$$      end if
@@ -196,12 +209,11 @@ c$$$            IF(XDOT(1,IBL)*VSTAR.GT.100) call abort()
          if(rank.eq.0) THEN
             WRITE (45,*) WHICH,(TIME+TOFF)*TSTAR,IBH,X(1:3,IBH)*RBAR,
      &           XDOT(1:3,IBH)*VSTAR,NNBT,RAVE(1:3)*RAU,VAVE(1:3)*VSTAR,
-     &           DEN,RIJMAX*RBAR,VSIGMA(1:3)*VSTAR*VSTAR
+     &           DEN,RIJMAX*RBAR,VSIGMA(1:3)*VSTAR*VSTAR,NMBH
          end if
 
-         TBH = TBH + DTBH
       END IF
-         
+*
       RETURN
-
+*
       END

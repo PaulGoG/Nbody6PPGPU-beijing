@@ -80,3 +80,6 @@
 *     Not dump common variables
       COMMON/LISTS/  ILIST(NMAX),JLIST(NMAX),JPERT(5*LMAX)
 *
+*       Massive black holes by name (KZ(24) = 1: one, = 3: a list).
+      COMMON/IMBHS/  NIMBHS,NAMEBH(16)
+*

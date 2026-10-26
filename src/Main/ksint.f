@@ -355,7 +355,8 @@
       END IF
 *
 *     For massive black hole ks, try to avoid terminated with large seperation
-      IF(KZ(24).EQ.1.AND.BODY(I)/BODYM.GT.200.AND.RI.GT.10.0*RMIN) THEN
+      IF((KZ(24).EQ.1.OR.KZ(24).EQ.3).AND.BODY(I)/BODYM.GT.200.AND.
+     &     RI.GT.10.0*RMIN) THEN
          IQ = .true.
       END IF
 

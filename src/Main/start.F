@@ -7,6 +7,7 @@
       INCLUDE 'common6.h'
       INCLUDE 'timing.h'
       EXTERNAL SCALE,MERGE
+      LOGICAL IMBHNAME
 *      COMMON/NNBCOT/ nnbave
       PARAMETER  (NS=12)
 *
@@ -73,6 +74,7 @@
 
 *       Initial massive black hole input
       IF (KZ(24).EQ.1) CALL IMBHINIT
+      IF (KZ(24).EQ.3) CALL IMBHFLAG
 *
 *       Set sequential name, maximum mass & primary velocity, initial single/binary total mass
       BODY1 = 0.0
@@ -81,6 +83,7 @@
       DO 20 I = 1,N
 *     exclude massive black hole mass in initial cluster mass
           IF(KZ(24).EQ.1.AND.I.EQ.N) GO TO 19
+          IF(KZ(24).EQ.3.AND.IMBHNAME(I)) GO TO 19
           IF(I.LE.2*NBIN0) THEN
              ZBMASS0 = ZBMASS0 + BODY(I)
           ELSE

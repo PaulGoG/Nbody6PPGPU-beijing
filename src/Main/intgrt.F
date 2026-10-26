@@ -1314,7 +1314,7 @@ c$$$ 1022 continue
 #endif
 
 *     Output of Massive black hole data
-      IF (KZ(24).EQ.1) then
+      IF (KZ(24).EQ.1.OR.KZ(24).EQ.3) then
          call BHPLOT
       END IF
 c$$$*     --10/27/13 10:33-lwang-add----------------------------------------*

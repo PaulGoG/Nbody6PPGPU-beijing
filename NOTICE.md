@@ -100,6 +100,15 @@ the same source as `v2026.07.6`).
   step, its force derivatives became infinite and the run spun in `CORE` without output. `regcor_gpu.F` now stops
   on a zero regular step and `core.f` after 64 cutoff expansions or a non-finite cutoff, so that a corrupted state
   ends the run at once [v2026.07.10].
+- `imbhinit.F`, `start.F`, `lagr.f`, `bhplot.f`, `mydump.F`, `ksint.f`, `intgrt.F`, `nbody6.F`, `file_init.F`,
+  `common6.h`: the flag route of the massive black holes, `KZ(24) = 3`. After `&INSCALE` (and `&INXTRNL0`) the
+  engine reads `NIMBHS DTBH` and a line of up to 16 body names (`dat.10` indices); those bodies keep their `dat.10`
+  mass, position and velocity, become stellar type 14, are excluded from the initial single-star mass and from the
+  Lagrangian radii (the exclusion of the KS centre of mass of a pair holding one compared a name with an index and
+  never acted; it acts now), and each gets its record in `mbh.45`, whose rows end with a new NAME column under both
+  routes. The list lives in `COMMON/IMBHS/`, written as an extra record of the restart dump and read back when
+  present: dumps of earlier tags restart with the list rebuilt from `NIMBH`, and a black hole missing after a restart
+  is dropped with a warning instead of ending the run [v2026.07.11].
 - From upstream `dev`, cherry-picked with their authorship: supernova ghosts removed from neighbour and
   perturber lists in `mdot.F`, ghost guards in `coal.f`, `chterm.f`, `expel.f`, `expel2.f`; `lagr.f`
   cumulative statistics and initialised radii under KZ(8) = 0; the Eggleton IMF exponent in `imf2.f`; HDF5

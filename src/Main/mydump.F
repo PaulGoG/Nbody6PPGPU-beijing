@@ -35,6 +35,7 @@
       COMMON/MODES/  P(NP)
       COMMON/RCHE/   Q(NQ)
       COMMON/BINARY/ S(NS)
+      COMMON/IMBHS/  NIMBHS,NAMEBH(16)
 *
       COMMON/NBODY/  X(3,NMAX),XDOT(3,NMAX),X0(3,NMAX),X0DOT(3,NMAX),
      &               F(3,NMAX),FDOT(3,NMAX),BODY(NMAX),RS(NMAX),
@@ -133,6 +134,7 @@
      *   (kstar(i),i=1,ntot),(iminr(i),i=1,ntot),(name(i),i=1,ntot)
 *
         write (IU) (aspn(i),i=1,ntot)
+        write (IU) nimbhs,(namebh(i),i=1,16)
 *
         write (IU) ((u(k,i),k=1,4),i=1,npairs),((u0(k,i),k=1,4),i=1,
      *    npairs),((udot(k,i),k=1,4),i=1,npairs),((fu(k,i),k=1,4),i=1,
@@ -272,6 +274,8 @@
      *   (kstar(i),i=1,ntot),(iminr(i),i=1,ntot),(name(i),i=1,ntot)
 *
         read (J) (aspn(i),i=1,ntot)
+        read (J,IOSTAT=IOSBH) nimbhs,(namebh(i),i=1,16)
+        IF (IOSBH.NE.0) nimbhs = 0
 *
         read (J) ((u(k,i),k=1,4),i=1,npairs),((u0(k,i),k=1,4),i=1,
      *    npairs),((udot(k,i),k=1,4),i=1,npairs),((fu(k,i),k=1,4),i=1,

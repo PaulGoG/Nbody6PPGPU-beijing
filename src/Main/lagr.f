@@ -19,6 +19,7 @@
       REAL*8  VRI(NMAX), VTI(3,NMAX),VTITMP(3),VITMP(3)
       REAL*8  VR_CORE,VT_CORE(3),V_CORE(3),V_COREV,VT_COREV
       INTEGER ISLIST(NMAX),IBLIST(NMAX)
+      LOGICAL IMBHNAME
 *
 *     Lagrangian radii fraction of total mass
       DATA FLAGR/0.001D0,0.003D0,0.005D0,0.01D0,0.03D0,0.05D0,0.1D0,
@@ -45,23 +46,20 @@
       IF (KZ(8).GT.0) THEN
 *     Need to exclude massive black hole mass
 *     Set square radii of resolved binaries
-         IF (KZ(24).EQ.1) THEN
+         IF (KZ(24).EQ.1.OR.KZ(24).EQ.3) THEN
             NPP = 0
-            NCMB = -100000
             DO I = 1,IFIRST-1
-               IF(NAME(I).NE.NIMBH) THEN
+               IF(.NOT.IMBHNAME(NAME(I))) THEN
                   NPP = NPP + 1
                   R2(NPP) = (X(1,I) - C(1))**2 + (X(2,I) - C(2))**2 +
      &                 (X(3,I) - C(3))**2
                   JLIST(NPP) = I
-               ELSE
-                  NCMB = KVEC(I) + N
                END IF
             END DO
 *
 *     Set square radii of single stars
             DO I = IFIRST,N
-               IF(NAME(I).NE.NIMBH) THEN
+               IF(.NOT.IMBHNAME(NAME(I))) THEN
                   NSNGL = NSNGL + 1
                   R2(NPP+NSNGL) = (X(1,I) - C(1))**2 + 
      &                 (X(2,I) - C(2))**2 + (X(3,I) - C(3))**2
@@ -72,7 +70,9 @@
             END DO
 *     Set square radii of c.m.
             DO I = N+1, NTOT
-               IF(NAME(I).NE.NCMB) THEN
+               JP = 2*(I - N)
+               IF(.NOT.(IMBHNAME(NAME(JP-1)).OR.
+     &              IMBHNAME(NAME(JP)))) THEN
                   NBIN = NBIN + 1
                   RBIN(NBIN) = (X(1,I) - C(1))**2 + (X(2,I) - C(2))**2 +
      &                 (X(3,I) - C(3))**2
@@ -126,9 +126,9 @@
 *     Only consider singles and resolved K.S.
 *     Set square radii
 *     exclude massive black hole
-         IF (KZ(24).EQ.1) THEN
+         IF (KZ(24).EQ.1.OR.KZ(24).EQ.3) THEN
             DO I = 1,N
-               IF(NAME(I).NE.NIMBH) THEN
+               IF(.NOT.IMBHNAME(NAME(I))) THEN
                   NP = NP + 1
                   R2(NP) = (X(1,I) - C(1))**2 + (X(2,I) - C(2))**2 +
      &                 (X(3,I) - C(3))**2
@@ -154,7 +154,7 @@
          ZM = 0.0
          ZMH = 0.5D0*ZMASS
 *     If massive black hole exist, exclude it from the rscale determination
-         IF (KZ(24).EQ.1) ZMH = ZMH - BIMBH/ZMBAR
+         IF (KZ(24).EQ.1.OR.KZ(24).EQ.3) ZMH = ZMH - BIMBH/ZMBAR
          I = 0
  1       I = I + 1
          IM = JLIST(I)
