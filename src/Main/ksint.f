@@ -45,11 +45,11 @@
      &    (KSTAR(I2).GE.10.AND.KSTAR(I2).LE.14).AND.
      &    H(IPAIR).LT.0.D0.AND.ECC.GT.0.D0
         IF (LBRAKE) A_EIN = 3.0*TWOPI*BODY(I)/(SEMI*CL2*(1-ECC2))
-*       Restart the GW accumulation clock unless the pair is a bound
-*       compact pair under KZ(27) > 2 (decay accumulates from TGWREF).
+*       Restart the GW accumulation unless the pair is a bound compact
+*       pair under KZ(27) > 2 (the decay accumulates from TGWREF).
       IF (.NOT.(KZ273.EQ.3.AND.H(IPAIR).LT.0.D0.AND.
      &    KSTAR(I1).GE.10.AND.KSTAR(I1).LE.14.AND.
-     &    KSTAR(I2).GE.10.AND.KSTAR(I2).LE.14)) TGWREF(IPAIR) = TIME
+     &    KSTAR(I2).GE.10.AND.KSTAR(I2).LE.14)) CALL GWRESET(IPAIR)
 *       Check for further unperturbed motion.
 *       Make sure relativistic binary is not unperturbed.
       IF (NNB0.EQ.0.AND.H(IPAIR).LT.0.0) THEN
@@ -262,36 +262,35 @@
 *    &   ' e,a,QP,RS[NB]=',4E13.5,' H, GAMMA=',2E13.5,
 *    &   ' A_EIN, TORB=',2E13.5)
 *
-*       Peters interval: the time since the last applied decay (TGWREF;
-*       global time, so KS slow-down is included). A hyperbolic pair has
-*       no orbit-averaged decay: an NS/BH pair loses the energy of one
-*       passage at each pericentre (GWCAPT), the merger test stays.
+*       Peters decay of a bound pair: the decrements of a and e over the
+*       interval since the last check are integrated at the elements of
+*       that interval and added to the pair's sums (GWACCUM), applied by
+*       KSTIDE once they exceed 1e-4 of a or e (TGWREF marks the last
+*       application; global time, so KS slow-down is included). A
+*       hyperbolic pair has no orbit-averaged decay: an NS/BH pair loses
+*       the energy of one passage at each pericentre (GWCAPT).
            IF (HI.LT.0.D0) THEN
-              DTX = MAX(TIME - TGWREF(IPAIR),0.0D0)
-              DTACC = DTX
-              CALL GW_DECISION(SEMI,BODY(I1),BODY(I2),
-     &            CLIGHT,ECC,DTX,RES,TGR,KMIN)
+              CALL GWACCUM(IPAIR,SEMI,ECC,BODY(I1),BODY(I2),RES,TGR)
            ELSE
               RES = 0
-              KMIN = 0
               TGR = 1.0D+30
            END IF
+           KMIN = 0
 *
-*       Special binary type -25 for GR shrinking binary: apply the decay once
-*       it changes a or e by more than 1e-4, otherwise keep accumulating.
+*       Special binary type -25 for GR shrinking binary: KSTIDE applies the
+*       accumulated decrements through the exact KS rescaling.
            IF(RES.EQ.1.AND.GAMMA(IPAIR).LT.1.D-1) THEN
 *       The type -25 selects the GR branch of KSTIDE only for this call: a
 *       negative c.m. type marks a chaotic binary elsewhere (MDOT, FLYBY).
               KSTGW = KSTAR(I)
               KSTAR(I) = -25
-*       A bound pair takes the whole interval (KSTIDE integrates it in steps).
-              IF (HI.LT.0.D0) DTX = DTACC
-              DTGW(IPAIR) = DTX
+*       Interval since the last application (diagnostic lines).
+              DTGW(IPAIR) = MAX(TIME - TGWREF(IPAIR),0.0D0)
               STGW = STEP(I1)
               CALL KSTIDE(IPAIR,QPERI)
 *       KSPOLY in KSTIDE sets the step with the slow-down factor included.
               IF (STEP(I1).NE.STGW) KSGWP = 1
-              IF (HI.LT.0.D0) TGWREF(IPAIR) = TIME
+              CALL GWRESET(IPAIR)
       if(rank.eq.0)WRITE(6,665)
      &   RES,KMIN,TTOT,DTGW(IPAIR),STEP(I1),I,IPAIR,LIST(1,I1),
      &   NAME(I1),NAME(I2),NAME(I),KSTAR(I1),KSTAR(I2),KSTAR(I),
@@ -762,105 +761,98 @@ c$$$      print*,rank,'rmax',rmax
 *
       END
 *
-      SUBROUTINE GW_DECISION(SEMI,M1,M2,CLIGHT,ECC,DT,RES,TGR,KMIN)
+      SUBROUTINE GWACCUM(IPAIR,SEMI,ECC,ZM1,ZM2,RES,TGR)
 *
-*     Decide if you want to integrate or not  
-      INTEGER RES,KMIN
-      REAL*8 SEMI,M1,M2,CLIGHT,ECC,DT,DE(5),TGR,DTX,DE1(5)
-      REAL*8 ECCNEW,SEMNEW,ECCN,SEMN
-      REAL*8 ttgr1,ttgr2
-      LOGICAL LSANE,COMP
+*
+*       Accumulated Peters decay of a bound compact KS pair.
+*       ---------------------------------------------------
+*
+*       The decrements of a and e over the interval since the last check
+*       (TGWCHK) are integrated from the elements of that interval (the
+*       KS elements less the sums not yet applied) in midpoint steps that
+*       change a by at most 1e-3, and added to GWDA, GWDE. RES = 1 once
+*       the sums exceed 1e-4 of a or e; KSTIDE then applies them. Rates
+*       taken at the elements of the application would charge the whole
+*       sub-threshold interval at the rate after an encounter changed e.
+*       TGR is a/|da/dt| at the current elements (merger test, UNPERT
+*       step limit).
+*
+      INCLUDE 'common6.h'
       include 'timing.h'
+      REAL*8  SEMI,ECC,ZM1,ZM2,TGR,DE(5),SEMIS,ECCS,SEMI0,ECC0,TLEFT,
+     &        DTS,SEMIM,ECCMID,QGW
+      INTEGER  RES
 *
       call cputim(ttgr1)
-      CALL TIDES3(SEMI,M1,M2,ECC,CLIGHT,DT,DE)
+      RES = 0
+      TGR = 1.0D+30
+*       Elements of the interval: the applied state less the pending sums.
+      SEMIS = SEMI - GWDA(IPAIR)
+      ECCS = ECC - GWDE(IPAIR)
+      IF (SEMIS.LE.0.0D0.OR.ECCS.LT.0.0D0.OR.ECCS.GE.1.0D0) THEN
+          SEMIS = SEMI
+          ECCS = ECC
+      END IF
+      SEMI0 = SEMIS
+      ECC0 = ECCS
+      QGW = 5.0D1*(ZM1 + ZM2)/CLIGHT**2
+      TLEFT = MAX(TIME - TGWCHK(IPAIR),0.0D0)
+      TGWCHK(IPAIR) = TIME
+*       Rates at the current elements (a/|da/dt| for the merger test).
+      CALL TIDES3(SEMIS,ZM1,ZM2,ECCS,CLIGHT,1.0D0,DE)
+      IF (DE(3).GT.0.0D0) TGR = SEMIS/DE(3)
+      IF (TLEFT.LE.0.0D0) GO TO 10
+*       Midpoint steps limited to a change of 1e-3 in a (an unperturbed
+*       interval may be long); stop inside the coalescence pericentre.
+    5 DTS = TLEFT
+      IF (DE(3)*DTS.GT.1.0D-03*SEMIS) DTS = 1.0D-03*SEMIS/DE(3)
+      SEMIM = SEMIS - 0.5D0*DE(3)*DTS
+      ECCMID = ECCS - 0.5D0*DE(4)*DTS
+      IF (SEMIM.GT.0.0D0.AND.ECCMID.GE.0.0D0.AND.ECCMID.LT.1.0D0) THEN
+          CALL TIDES3(SEMIM,ZM1,ZM2,ECCMID,CLIGHT,DTS,DE)
+          SEMIS = SEMIS - DE(3)
+          ECCS = MAX(ECCS - DE(4),0.0D0)
+      ELSE
+          SEMIS = SEMIS - DE(3)*DTS
+          ECCS = MAX(ECCS - DE(4)*DTS,0.0D0)
+      END IF
+      TLEFT = TLEFT - DTS
+      IF (TLEFT.GT.0.0D0.AND.SEMIS.GT.0.0D0.AND.ECCS.LT.1.0D0.AND.
+     &    SEMIS*(1.0D0 - ECCS).GT.QGW) THEN
+          CALL TIDES3(SEMIS,ZM1,ZM2,ECCS,CLIGHT,1.0D0,DE)
+          GO TO 5
+      END IF
+      GWDA(IPAIR) = GWDA(IPAIR) + (SEMI0 - SEMIS)
+      GWDE(IPAIR) = GWDE(IPAIR) + (ECC0 - ECCS)
+*       Apply once the sums exceed 1e-4 of a or e.
+   10 IF (GWDA(IPAIR).GT.1.0D-04*SEMI.OR.
+     &    (ECC.GT.0.0D0.AND.GWDE(IPAIR).GT.1.0D-04*ECC)) RES = 1
       call cputim(ttgr2)
       if(rank.eq.0)tttides3 = tttides3 + (ttgr2-ttgr1)*60.
       if(rank.eq.0)itides3 = itides3 + 1
 *
-      RES=0
-	  KMIN=0
-      DTX = DT
-      ECCN = ECC-DE(4)
-      SEMN = SEMI-DE(3)
-	  
-* JFNS Added differentiation between hyperbolic & elliptical 
-	  IF (ECC.GE.0.D0.AND.ECC.LT.1.D0.AND.SEMI.GT.0.D0) THEN
-*	  
-*      PRINT*,' 0 GW_DEC: M1/2 KMIN DT DE ',M1,M2,KMIN,DT,DE
-*      PRINT*,' 0 ECCN, SEMN,ECC,SEMI ',ECCN, SEMN,ECC,SEMI
-		DTX = DT
-		  IF(ECCN.LT.0.D0.OR.ECCN.GT.1.D0.OR.SEMN.LT.0.D0)THEN
-			 DE(1:5) = 0.D0
-			 DO K = 1,64
-			 DTX=DTX/2.D0
-			 CALL TIDES3(SEMI,M1,M2,ECC,CLIGHT,DTX,DE)
-			 ECCN = ECC-DE(4)
-			 SEMN = SEMI-DE(3)
-				IF(ECCN.GT.0.D0.AND.ECCN.LT.1.D0.AND.SEMN.GT.0.D0)THEN
-				   KMIN = K
-				   GOTO 50
-				END IF
-			 END DO
-		  END IF	  
-	  ELSE IF (ECC.GT.1.D0.AND.SEMI.LT.0.D0) THEN
-		  IF(ECCN.LT.1.D0)THEN
-			 DE(1:5) = 0.D0
-			 DO K = 1,64
-			 DTX=DTX/2.D0
-			 CALL TIDES3(SEMI,M1,M2,ECC,CLIGHT,DTX,DE)
-			 ECCN = ECC-DE(4)
-			 SEMN = SEMI-DE(3)
-				IF(ECCN.GT.1.D0.AND.SEMN.LT.0.D0)THEN
-				   KMIN = K
-				   GOTO 50
-				END IF
-			 END DO
-		  END IF	  
-	  END IF
+      RETURN
 *
- 50   CONTINUE
+      END
 *
-      ECCNEW = ECCN
-      SEMNEW = SEMN
-      DTOLD = DT
-      DT = DTX
-*       Decay time a/|da/dt| from the rates (also for an empty interval).
-      IF (DE(3).NE.0.D0) THEN
-         TGR = DABS(DT*SEMI/DE(3))
-      ELSE
-         CALL TIDES3(SEMI,M1,M2,ECC,CLIGHT,1.0D0,DE1)
-         TGR = 1.0D+30
-         IF (DE1(3).NE.0.D0) TGR = DABS(SEMI/DE1(3))
-      END IF
-	  
-* JFNS Added hyperbolic case
-*      LSANE = ECCNEW.GT.0.D0.AND.ECCNEW.LT.1.D0.AND.
-*          SEMNEW.GT.0.D0
-	  LSANE = ECCNEW.GE.0.D0
 *
-	  IF (ECC.GT.1.0D0) THEN
-	  COMP = DABS(DE(3)/SEMI).GT.1.0D-4.OR.DE(4).GT.1.0D-4*ECC
-	  ELSE
-	  LSANE = LSANE.AND.SEMNEW.GT.0.D0
-	  COMP = DABS(DE(3)/SEMI).GT.1.0D-4.OR.
-     &       (ECC.GT.0.D0.AND.DE(4).GT.1.0D-4*ECC)
-	  END IF
-	  LSANE = LSANE.AND.COMP
-*	  
-*    IF(LSANE.AND.(DE(4)/ECC).GT.1.0D-4.OR.(DE(3)/SEMI).GT.1.0D-4) THEN
-*        do not bypass the GW emission effect
+      SUBROUTINE GWRESET(IPAIR)
 *
-	  IF(LSANE) RES=1 
-	  	  
 *
-********************************************************	  
-*      PRINT*,' GW_DEC: M1/2 KMIN DT/old DE ',M1,M2,KMIN,DT,DTOLD,DE
-*      PRINT*,' ECCNEW, SEMNEW,ECC,SEMI ',ECCNEW, SEMNEW,ECC,SEMI
-
+*       Reset of the Peters accumulation of a KS pair.
+*       ---------------------------------------------
 *
-      RETURN 
-   
+*       New pair, applied decay, capture, or components not both compact.
+*
+      INCLUDE 'common6.h'
+*
+      GWDA(IPAIR) = 0.0D0
+      GWDE(IPAIR) = 0.0D0
+      TGWREF(IPAIR) = TIME
+      TGWCHK(IPAIR) = TIME
+*
+      RETURN
+*
       END
 *
 *
@@ -936,7 +928,7 @@ c$$$      print*,rank,'rmax',rmax
       E(10) = E(10) + DEGW
       EGRAV = EGRAV + DEGW
 *
-*       New perturbers for a captured pair; start its GW clock.
+*       New perturbers for a captured pair; start its GW accumulation.
       IF (H1.LT.0.0D0) THEN
           WHICH = 'GR CAPTURE'
           NP0 = LIST(1,I1)
@@ -944,7 +936,7 @@ c$$$      print*,rank,'rmax',rmax
           IF (NP0.EQ.0.AND.LIST(1,I1).GT.0) THEN
               IF (LIST(2,I1).EQ.I) LIST(2,I1) = IFIRST
           END IF
-          TGWREF(IPAIR) = TIME
+          CALL GWRESET(IPAIR)
       ELSE
           WHICH = 'GR FLYBY'
       END IF

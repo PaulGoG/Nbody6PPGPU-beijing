@@ -110,38 +110,17 @@
         IF (KSTAR(I).EQ.-25) THEN
            DTX = DTGW(IPAIR)
            call cputim(ttgr3)
-           CALL TIDES3(SEMI,BODY(I1),BODY(I2),ECC,CLIGHT,DTX,DE)
-*       Bound pair: integrate the Peters equations over DTX in midpoint steps
-*       that change a by at most 1e-3 (an accumulated interval may be long);
-*       stop inside the coalescence pericentre 25 R_S.
+*       Rates at the current elements: a/|da/dt| for the merger test.
+           CALL TIDES3(SEMI,BODY(I1),BODY(I2),ECC,CLIGHT,1.0D0,DE)
+           TGR0 = 1.0D+30
+           IF (DE(3).GT.0.0D0) TGR0 = SEMI/DE(3)
+*       Bound pair: the decrements of a and e accumulated at the checks
+*       since the last application (GWACCUM), applied below by the exact
+*       KS rescaling; the energy change follows from SEMI1.
+           DE(1:5) = 0.0D0
            IF (ECC.LT.1.0D0.AND.SEMI.GT.0.0D0) THEN
-              TGR0 = DABS(DTX*SEMI/DE(3))
-              QGW = 5.0D1*BODY(I)/CLIGHT**2
-              SEMIS = SEMI
-              ECCS = ECC
-              TLEFT = DTX
-    6         CALL TIDES3(SEMIS,BODY(I1),BODY(I2),ECCS,CLIGHT,1.0D0,DE)
-              DTS = TLEFT
-              IF (DE(3)*DTS.GT.1.0D-03*SEMIS) DTS = 1.0D-03*SEMIS/DE(3)
-              SEMIM = SEMIS - 0.5D0*DE(3)*DTS
-              ECCMID = ECCS - 0.5D0*DE(4)*DTS
-              IF (SEMIM.GT.0.0D0.AND.ECCMID.GE.0.0D0.AND.
-     &            ECCMID.LT.1.0D0) THEN
-                 CALL TIDES3(SEMIM,BODY(I1),BODY(I2),ECCMID,CLIGHT,
-     &                       DTS,DE)
-                 SEMIS = SEMIS - DE(3)
-                 ECCS = ECCS - DE(4)
-              ELSE
-                 SEMIS = SEMIS - DE(3)*DTS
-                 ECCS = MAX(ECCS - DE(4)*DTS,0.0D0)
-              END IF
-              TLEFT = TLEFT - DTS
-              IF (TLEFT.GT.0.0D0.AND.SEMIS.GT.0.0D0.AND.
-     &            ECCS.GE.0.0D0.AND.ECCS.LT.1.0D0.AND.
-     &            SEMIS*(1.0D0 - ECCS).GT.QGW) GO TO 6
-*       Net changes over the interval (the energy change follows from SEMI1).
-              DE(3) = SEMI - SEMIS
-              DE(4) = ECC - ECCS
+              DE(3) = GWDA(IPAIR)
+              DE(4) = MIN(GWDE(IPAIR),ECC)
            END IF
            call cputim(ttgr4)
            DH = -DE(1)/ZMU
@@ -153,8 +132,7 @@
            CL2 = CLIGHT**2
            A_EIN = 3.0*TWOPI*BODY(I)/(SEMI*CL2*(1-ECC2))
            TORB = TWOPI*SQRT(SEMI**3/BODY(I))
-           TGR = DABS(DTX*SEMI/DE(3))
-           IF (ECC.LT.1.0D0.AND.SEMI.GT.0.0D0) TGR = TGR0
+           TGR = TGR0
            RSCHW = 2.0*BODY(I)/CL2
            SEMI1 = SEMI - DE(3)
            ECC1 = ECC - DE(4)

@@ -325,8 +325,8 @@ c$$$          if(R(IPAIR).ge.1) call abort()
 *       Set flag to distinguish between existing and new binaries (K = -1/0).
       LIST(2,JCOMP) = K
       KSLOW(IPAIR) = 1
-*       Start the GW accumulation clock of the new pair (KSINT, UNPERT).
-      TGWREF(IPAIR) = TIME
+*       Start the GW accumulation of the new pair (KSINT, UNPERT).
+      CALL GWRESET(IPAIR)
 *
 *       Check diagnostic output of new hard binary.
       IF (KZ(8).GT.0.AND.K.EQ.0) THEN

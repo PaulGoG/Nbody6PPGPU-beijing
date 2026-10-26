@@ -241,22 +241,19 @@
            RSCHW = 2.0*BODY(I)/CLIGHT**2
            RES = 0
            KMIN = 0
-*       Peters interval: time since the last applied decay (TGWREF).
-           DTX = MAX(TIME - TGWREF(IPAIR),0.0D0)
-           DTACC = DTX
-           CALL GW_DECISION(SEMI,BODY(I1),BODY(I2),
-     &              CLIGHT,ECC,DTX,RES,TGR,KMIN)
-*       Special binary type -25 for GR shrinking binary: apply the decay once
-*       it changes a or e by more than 1e-4, otherwise keep accumulating.
+*       Peters decay accumulated per check (GWACCUM, as in KSINT).
+           CALL GWACCUM(IPAIR,SEMI,ECC,BODY(I1),BODY(I2),RES,TGR)
+*       Special binary type -25 for GR shrinking binary: KSTIDE applies the
+*       accumulated decrements once they exceed 1e-4 of a or e.
            IF(RES.EQ.1) THEN
 *       The type -25 selects the GR branch of KSTIDE only for this call: a
 *       negative c.m. type marks a chaotic binary elsewhere (MDOT, FLYBY).
               KSTGW = KSTAR(I)
               KSTAR(I) = -25
-*       The whole interval (KSTIDE integrates it in steps).
-              DTGW(IPAIR) = DTACC
+*       Interval since the last application (diagnostic lines).
+              DTGW(IPAIR) = MAX(TIME - TGWREF(IPAIR),0.0D0)
               CALL KSTIDE(IPAIR,QPERI)
-              TGWREF(IPAIR) = TIME
+              CALL GWRESET(IPAIR)
       if(rank.eq.0)WRITE(6,665)
      &   RES,KMIN,TTOT,DTGW(IPAIR),STEP(I1),I,IPAIR,LIST(1,I1),
      &   NAME(I1),NAME(I2),NAME(I),KSTAR(I1),KSTAR(I2),KSTAR(I),
