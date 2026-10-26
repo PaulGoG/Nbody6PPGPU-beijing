@@ -86,6 +86,13 @@ the same source as `v2026.07.6`).
 - `chain.f`: the tiny-step diagnostic format takes the ten reals of a ten-member chain [v2026.07.9].
 - `hrplot.F`: the second component of a KS pair in `bev.82` is evolved with its own main-sequence time (it took
   the first component's) [v2026.07.9].
+- `ksint.f`, `unpert.f`, `kstide.f`: under KZ(27) > 2 the Peters decay of a bound compact KS pair is accumulated at
+  every check as the decrements of a and e over the interval since the previous check, integrated at the elements of
+  that interval (`GWACCUM`), and applied once the sums exceed 10⁻⁴ of a or e; before, the whole sub-threshold
+  interval was integrated at the elements of the application, so that an encounter raising e charged the interval
+  before it at the new rate (up to 10³ times larger) and brought the merger forward by up to that interval. Three
+  per-pair arrays (`GWDA`, `GWDE`, `TGWCHK`) join `COMMON/PAIRS/`, the restart dump and the MPI exchange: a dump
+  written by an earlier tag cannot be restarted with this one [v2026.07.10].
 - From upstream `dev`, cherry-picked with their authorship: supernova ghosts removed from neighbour and
   perturber lists in `mdot.F`, ghost guards in `coal.f`, `chterm.f`, `expel.f`, `expel2.f`; `lagr.f`
   cumulative statistics and initialised radii under KZ(8) = 0; the Eggleton IMF exponent in `imf2.f`; HDF5
