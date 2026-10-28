@@ -109,6 +109,21 @@ the same source as `v2026.07.6`).
   routes. The list lives in `COMMON/IMBHS/`, written as an extra record of the restart dump and read back when
   present: dumps of earlier tags restart with the list rebuilt from `NIMBH`, and a black hole missing after a restart
   is dropped with a warning instead of ending the run [v2026.07.11].
+- `tstep2.f`, `stepk.f`: a body at exact rest (or with a speed below 10⁻² F/Ḟ in N-body units) gets its first step
+  from the force criterion alone; before, its zero velocity time scale gave a zero step, `STEPK` returned a level
+  beyond the step table and the run stopped in `SORT_TLIST` with a step of 2×10⁻³¹⁴ [v2026.07.12].
+- `kspn.f` (new), `kspn.h` (new), `ksint.f`, `kscorr.f`, `input.F`: post-Newtonian terms of compact KS pairs,
+  `KZ(43)`. Bits 1, 2 and 4 add the 1PN, 2PN and 2.5PN relative accelerations (Blanchet 2024, DOI
+  10.1007/s41114-024-00050-z; harmonic coordinates, centre-of-mass frame) to the perturbation of every perturbed KS
+  step of a bound pair of two neutron stars or black holes whose pericentre compactness m/(c²q) is at least 10⁻⁶;
+  bit 8 admits any bound pair (a test mode) and bit 16 writes a `PN KSINT` line every 64 PN steps. The terms are
+  added after the relative perturbation γ is formed, so termination, slow-down and perturber selection stay
+  Newtonian; such a step has no slow-down, includes the PN strength in the step criterion, and skips the
+  orbit-averaged Peters decay of `KZ(27) > 2`, whose osculating elements oscillate under 1PN; unperturbed pairs
+  keep that decay and have no periastron advance. The work of the 1PN and 2PN terms is booked as the change of the
+  conservative energy (Kidder 1995, DOI 10.1103/PhysRevD.52.821, Eq. 2.7), the 2.5PN work by quadrature, both into
+  `ECOLL`, the 2.5PN part also into `EGRAV`. `KZ(43) = 7` with `KZ(27) = 3` is the intended setting (the input
+  warns when 2.5PN is selected without `KZ(27) > 2`, which supplies the merger test) [v2026.07.12].
 - From upstream `dev`, cherry-picked with their authorship: supernova ghosts removed from neighbour and
   perturber lists in `mdot.F`, ghost guards in `coal.f`, `chterm.f`, `expel.f`, `expel2.f`; `lagr.f`
   cumulative statistics and initialised radii under KZ(8) = 0; the Eggleton IMF exponent in `imf2.f`; HDF5
