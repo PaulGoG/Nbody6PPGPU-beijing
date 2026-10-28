@@ -35,7 +35,8 @@
           GO TO 4
       END IF
       K = K + 1
-*
+*       DT equal to DTK(64) ends the search at K = 65 (no such level).
+      K = MIN(K,64)
    10 DTN = DTK(K)
 *
       RETURN
