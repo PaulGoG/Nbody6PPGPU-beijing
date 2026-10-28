@@ -5,6 +5,7 @@
 *       ------------------------
 *
       INCLUDE 'common6.h'
+      INCLUDE 'kspn.h'
 *     safe for parallel, no value change, used value: islow
       COMMON/SLOW0/  RANGE,ISLOW(10)
       REAL*8  UI(4),UIDOT(4),FP(6),FD(6),FREG(4),FRD(4),A1(3,4),A(8),
@@ -123,6 +124,13 @@
 *       Update the physical distance for next iteration or final solution.
           RI = UI(1)**2 + UI(2)**2 + UI(3)**2 + UI(4)**2
 *
+*       PN terms re-evaluated at the corrected state for the second
+*       iteration: a velocity-dependent force taken at the predicted
+*       state alone leaves a secular drift of the orbit.
+          IF (LPNSTEP.EQ.1.AND.ITER.LT.ITMAX) THEN
+              CALL KSPNUPD(IPAIR,UI,UIDOT,RI,FP,FD1,FD)
+          END IF
+*
 *       Choose between old and new perturbation (skip last time).
 *         IF (ITER.GT.ITMAX) THEN
 *         IF (GAMMA(IPAIR).LT.1.0D-04) THEN
@@ -158,6 +166,11 @@
           AT3 = 2.0D0*DHD + SUM*DTU
           DH = DH0 + (0.25D0*AT3 + ONE3*BT2)*DTU
    40 CONTINUE
+*
+*       Work of the post-Newtonian terms over the step (KZ(43)).
+      IF (LPNSTEP.EQ.1) THEN
+          CALL KSPNBK(IPAIR,UI,UIDOT,FP,RI,H(IPAIR)+DH,DTU)
+      END IF
 *
 *       Copy final values and set higher derivatives.
       H(IPAIR) = H(IPAIR) + DH

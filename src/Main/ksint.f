@@ -6,6 +6,7 @@
 *
       Include 'kspars.h'
       INCLUDE 'common6.h'
+      INCLUDE 'kspn.h'
       include 'timing.h'
 *     Safe for parallel, no value change, used value: tmdis,namem,nameg,kstarm
       COMMON/BINARY/  CM(4,MMAX),XREL(3,MMAX),VREL(3,MMAX),
@@ -28,6 +29,7 @@
       IPAIR = KVEC(I1)
       I = N + IPAIR
       IPHASE = 0
+      LPNSTEP = 0
       call jpred(i,time,time)
 *
       CL2 = CLIGHT**2   
@@ -71,6 +73,10 @@
 *     G0 = GAMMA(IPAIR)
       GI = SQRT(FP(1)**2 + FP(2)**2 + FP(3)**2)*R(IPAIR)**2*BODYIN
       GAMMA(IPAIR) = GI
+*
+*       Post-Newtonian terms of a compact pair (KZ(43)), added after
+*       GAMMA so that the perturbation criteria stay Newtonian.
+      IF (KZ(43).GT.0) CALL KSPNADD(IPAIR,I1,XI,VI,FP,FD)
 *
 *       Apply the Hermite corrector.
       CALL KSCORR(IPAIR,UI,UIDOT,FP,FD,TD2,TDOT4,TDOT5,TDOT6)
@@ -167,13 +173,18 @@
           END IF
       END IF
 *
-*       Include perturbation factor in predicted step.
-      IF (GI.LT.0.0005) THEN
+*       Include perturbation factor in predicted step (with the PN
+*       terms of KZ(43) as a relative perturbation |a_PN| r^2/m).
+      GS = GI
+      IF (LPNSTEP.EQ.1) THEN
+          GS = GI + SQRT(FPN(1)**2 + FPN(2)**2 + FPN(3)**2)*RI**2*BODYIN
+      END IF
+      IF (GS.LT.0.0005) THEN
 *       Use second-order expansion of cube root for small perturbations.
-          W3 = 333.3*GI
+          W3 = 333.3*GS
           W2 = SQRT(W1)/(1.0 + W3*(1.0 - W3))
       ELSE
-          W3 = 1.0 + 1000.0*GI
+          W3 = 1.0 + 1000.0*GS
           W2 = SQRT(W1)/W3**0.3333
       END IF
 *
@@ -269,7 +280,13 @@
 *       application; global time, so KS slow-down is included). A
 *       hyperbolic pair has no orbit-averaged decay: an NS/BH pair loses
 *       the energy of one passage at each pericentre (GWCAPT).
-           IF (HI.LT.0.D0) THEN
+           IF (HI.LT.0.D0.AND.LPNSTEP.EQ.1) THEN
+*       The step carries PN terms: no orbit-averaged decay, which acts
+*       through the Newtonian osculating elements (they oscillate under
+*       1PN); the decay is the 2.5PN term's (KZ(43) bit 4).
+              CALL GWSKIP(IPAIR,SEMI,ECC,BODY(I1),BODY(I2),TGR)
+              RES = 0
+           ELSE IF (HI.LT.0.D0) THEN
               CALL GWACCUM(IPAIR,SEMI,ECC,BODY(I1),BODY(I2),RES,TGR)
            ELSE
               RES = 0
@@ -709,6 +726,8 @@ c$$$      print*,rank,'rmax',rmax
 *       See whether KS slow-down procedure should be (re)-checked (no Chaos).
       IF (KZ(26).GT.0.AND.KSTAR(I).GE.0) THEN
           KMOD = INT(RANGE*GMIN/MAX(GI,1.0D-10))
+*       No slow-down while the PN terms act (they are internal forces).
+          IF (LPNSTEP.EQ.1) KMOD = 1
           IF (KMOD.GT.1.OR.IMOD.GT.1) THEN
               CALL KSMOD(IPAIR,KMOD)
               IF (KMOD.LT.0) GO TO 100
@@ -831,6 +850,29 @@ c$$$      print*,rank,'rmax',rmax
       call cputim(ttgr2)
       if(rank.eq.0)tttides3 = tttides3 + (ttgr2-ttgr1)*60.
       if(rank.eq.0)itides3 = itides3 + 1
+*
+      RETURN
+*
+      END
+*
+*
+      SUBROUTINE GWSKIP(IPAIR,SEMI,ECC,ZM1,ZM2,TGR)
+*
+*
+*       Peters check of a KS step that carries the 2.5PN terms.
+*       ------------------------------------------------------
+*
+*       The interval is integrated by the 2.5PN acceleration (KSPNADD),
+*       so nothing is accumulated; TGWCHK moves to the present and TGR
+*       = a/|da/dt| at the current elements serves the merger test.
+*
+      INCLUDE 'common6.h'
+      REAL*8  SEMI,ECC,ZM1,ZM2,TGR,DE(5)
+*
+      TGWCHK(IPAIR) = TIME
+      TGR = 1.0D+30
+      CALL TIDES3(SEMI,ZM1,ZM2,ECC,CLIGHT,1.0D0,DE)
+      IF (DE(3).GT.0.0D0) TGR = SEMI/DE(3)
 *
       RETURN
 *

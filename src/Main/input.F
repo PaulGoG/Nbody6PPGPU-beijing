@@ -42,6 +42,12 @@ C Termination time in physical units, TCRITP, read in nbody6.F
          KZ273 = 3
          KZ(27) = KZ(27) - 2
       END IF
+*       The 2.5PN terms of KZ(43) leave the unperturbed phases and the
+*       merger test to the Peters path of KZ(27) > 2.
+      IF(MOD(KZ(43)/4,2).EQ.1.AND.KZ273.NE.3.AND.rank.eq.0) THEN
+         WRITE(6,'(A)') ' WARNING: KZ(43) 2.5PN without KZ(27) > 2: no'
+     &      //' decay of unperturbed pairs and no GR merger test'
+      END IF
 *
       END IF
 *     Allow step for HDF5 files to be larger than one. (R.Sp. Sep. 2021)
