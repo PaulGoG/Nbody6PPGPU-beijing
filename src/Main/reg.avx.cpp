@@ -151,8 +151,8 @@ void GPUNB_send(
 		jparr1[j] = __builtin_ia32_cvtpd2ps256(jp1);
 		jparr2[j] = __builtin_ia32_cvtpd2ps256(jp2);
 	}
-	if(nj%2){ // padding
-		jparr1[nj] = (v4sf){255.0f, 255.0f, 255.0f, 0.0f};
+	if(nj%2){ // padding: a massless particle outside every neighbour sphere
+		jparr1[nj] = (v4sf){1.0e18f, 1.0e18f, 1.0e18f, 0.0f};
 		jparr2[nj] = (v4sf){0.0f, 0.0f, 0.0f, 0.0f};
 		nbody++;
 	}

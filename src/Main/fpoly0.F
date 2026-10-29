@@ -213,7 +213,8 @@
               DO 60 L = 2,NNB+1
 *       Note GPU address starts from 0 (hence add IFIRST to neighbour list).
                   ITEMP = LISTGP(L,LL) + IFIRST
-                  IF (ITEMP.NE.I) THEN
+*       Indices beyond NTOT (padding of the force library) are no bodies.
+                  IF (ITEMP.NE.I.AND.ITEMP.LE.NTOT) THEN
                       L1 = L1 + 1
                       LISTGP(L1,LL) = ITEMP
                   END IF

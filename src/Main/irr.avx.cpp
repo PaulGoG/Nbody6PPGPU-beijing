@@ -90,9 +90,9 @@ struct Particle{
 		time = (v2df){_time, _time};
 	}
 
-	Particle(int) // constructor for a dummy particle
+	Particle(int) // massless dummy particle, outside every neighbour sphere
 	{
-		posH = (v4sf){255.0f, 255.0f, 255.0f, 0.0f};
+		posH = (v4sf){1.0e18f, 1.0e18f, 1.0e18f, 0.0f};
 		posL = vel = acc2 = jrk6 = (v4sf)REP4(0.0f);
 		time = (v2df){0.0, 0.0};
 	}
