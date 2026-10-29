@@ -124,6 +124,22 @@ the same source as `v2026.07.6`).
   conservative energy (Kidder 1995, DOI 10.1103/PhysRevD.52.821, Eq. 2.7), the 2.5PN work by quadrature, both into
   `ECOLL`, the 2.5PN part also into `EGRAV`. `KZ(43) = 7` with `KZ(27) = 3` is the intended setting (the input
   warns when 2.5PN is selected without `KZ(27) > 2`, which supplies the merger test) [v2026.07.12].
+- `mbh.F` (new), `mbh.h` (new), `start.F`, `intgrt.F`, `nbint_cor.f`, `fpoly0.F`, `fpoly1.f`, `fpoly1_ks.f`,
+  `kspert.f`, `kspoly.f`, `search.f`, `energy.F`, `energy_mpi.F`, `mydump.F`: a static massive black hole at the
+  coordinate origin, `KZ(44) = 1`, read from the namelist `&INMBH MBH, EPSPC, RTMODE, RACCRPC, FACC, BETAF, IPART`
+  after the IMBH input (M☉, pc; isolated clusters, `KZ(14) = 0`). Its Plummer-softened force enters the irregular
+  force and the initial polynomials of every body and the perturbation of KS pairs as a tidal difference, also in
+  the perturbation estimate of the KS candidate search (without it a pair formed deep in the black hole's field
+  was integrated as unperturbed); its potential enters the external energy. After every block step a single star
+  whose two-body orbit about the black hole has its pericentre within the step and inside r_t/β, or inside
+  4 G M/c², is removed at the passage: its energy in the cluster and black-hole potentials goes into `ECOLL`, its
+  mass leaves the cluster, it becomes a ghost as in `coal.f`, and a stamped line `TDE` or `TDE PLUNGE` is written.
+  r_t is `RACCRPC` (`RTMODE = 2`) or R★ (M/m★)^{1/3} with the stellar radius (`RTMODE = 1`, `KZ(19) ≥ 3`).
+  `IPART = 1, 2` replaces the full-disruption threshold by the stripped fraction of Guillochon & Ramirez-Ruiz
+  (2013, DOI 10.1088/0004-637X/767/1/25) for γ = 4/3 or 5/3: full disruption above β = 1.85 or 0.9, below that
+  down to β = 0.6 or 0.5 the star loses that fraction of its mass with the matching energy and keeps its orbit
+  (`TDE PARTIAL`, at most one per pericentre passage). The black-hole mass stays fixed (`FACC` is read and
+  checked only). Restart dumps carry the black hole as an optional record [v2026.07.13].
 - From upstream `dev`, cherry-picked with their authorship: supernova ghosts removed from neighbour and
   perturber lists in `mdot.F`, ghost guards in `coal.f`, `chterm.f`, `expel.f`, `expel2.f`; `lagr.f`
   cumulative statistics and initialised radii under KZ(8) = 0; the Eggleton IMF exponent in `imf2.f`; HDF5

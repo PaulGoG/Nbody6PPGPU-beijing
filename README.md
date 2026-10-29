@@ -1,10 +1,10 @@
 > This is my fork of [nbody6ppgpu/Nbody6PPGPU-beijing](https://github.com/nbody6ppgpu/Nbody6PPGPU-beijing),
 > maintained for [Nbody6Dynamics.jl](https://github.com/PaulGoG/Nbody6Dynamics.jl). The branch `main` carries the
 > corrections listed in [`NOTICE.md`](NOTICE.md) on top of upstream release v2026.07, tagged `v2026.07.N`
-> (current: `v2026.07.12`):
+> (current: `v2026.07.13`):
 >
 > ```bash
-> git clone -b v2026.07.12 https://github.com/PaulGoG/Nbody6PPGPU-beijing
+> git clone -b v2026.07.13 https://github.com/PaulGoG/Nbody6PPGPU-beijing
 > ```
 >
 > The text below is upstream's README. Where it disagrees with `NOTICE.md`, `NOTICE.md` describes this fork: the
