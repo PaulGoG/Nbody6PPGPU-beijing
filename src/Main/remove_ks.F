@@ -5,6 +5,7 @@
 *       -----------------
 *
       INCLUDE 'common6.h'
+      INCLUDE 'kspn.h'
       COMMON/XPRED/ TPRED(NMAX),TRES(KMAX),ipredall
       REAL*8 TPRED,DSAVE
       LOGICAL ipredall
@@ -127,6 +128,10 @@
 *
 *     Move TRES of last pair to ipair
       TRES(IPAIR) = TRES(LPAIR)
+*     PN parts of HDOT..HDOT4 and their keys (KZ(43), KSPNBK).
+      HPNS(1:4,IPAIR) = HPNS(1:4,LPAIR)
+      HRRS(1:4,IPAIR) = HRRS(1:4,LPAIR)
+      HPKEY(1:2,IPAIR) = HPKEY(1:2,LPAIR)
 
       RETURN
 *
