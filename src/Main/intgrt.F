@@ -1399,6 +1399,16 @@ c$$$          IF (TIME.GT.TMDOT.AND.DMOD(TIME,STEPX).EQ.0.0D0) THEN
           END IF
       END IF
 *
+*       Pericentre passages inside the capture radius of the static massive
+*       black hole (KZ(44) = 1): removals change the particle data.
+      IF (KZ(44).GT.0) THEN
+          CALL MBHCHECK(IACC)
+          IF (IACC.GT.0) THEN
+              IPHASE = -1
+              GO TO 999
+          END IF
+      END IF
+*
 *       Advance counters and check timer & optional COMMON save (NSUB = 0).
       NTIMER = NTIMER + NXTLEN
       IF (NTIMER.LT.NMAX) GO TO 1

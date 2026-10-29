@@ -154,8 +154,15 @@ c$$$      end if
    45     CONTINUE
       END IF 
 *
+*       Static black hole (KZ(44) = 1): its force on both components,
+*       so that the relative perturbation holds the tidal difference.
+   50 IF (KZ(44).GT.0) THEN
+          CALL MBHFORCE(XI(1),VI(1),FP(1),FD(1))
+          CALL MBHFORCE(XI(4),VI(4),FP(4),FD(4))
+      END IF
+*
 *       Set the relative perturbing force and first derivative.
-   50 DO 55 K = 1,3
+      DO 55 K = 1,3
           FP(K) = FP(K) - FP(K+3)
           FD(K) = FD(K) - FD(K+3)
           TF(K) = 0.0D0

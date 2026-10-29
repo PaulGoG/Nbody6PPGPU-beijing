@@ -36,6 +36,7 @@
       COMMON/RCHE/   Q(NQ)
       COMMON/BINARY/ S(NS)
       COMMON/IMBHS/  NIMBHS,NAMEBH(16)
+      INCLUDE 'mbh.h'
 *
       COMMON/NBODY/  X(3,NMAX),XDOT(3,NMAX),X0(3,NMAX),X0DOT(3,NMAX),
      &               F(3,NMAX),FDOT(3,NMAX),BODY(NMAX),RS(NMAX),
@@ -135,6 +136,9 @@
 *
         write (IU) (aspn(i),i=1,ntot)
         write (IU) nimbhs,(namebh(i),i=1,16)
+*       Static black hole (KZ(44)), led by the marker 44071.
+        write (IU) 44071,cmbh,epsbh,raccr,facc,betaf,dmtde,embhc,
+     *    rtmode,ntde,nplunge
 *
         write (IU) ((u(k,i),k=1,4),i=1,npairs),((u0(k,i),k=1,4),i=1,
      *    npairs),((udot(k,i),k=1,4),i=1,npairs),((fu(k,i),k=1,4),i=1,
@@ -276,6 +280,16 @@
         read (J) (aspn(i),i=1,ntot)
         read (J,IOSTAT=IOSBH) nimbhs,(namebh(i),i=1,16)
         IF (IOSBH.NE.0) nimbhs = 0
+*       A dump without the black-hole record (earlier tags): the next
+*       record is read again as the KS data, the black hole stays off.
+        read (J,IOSTAT=IOSMB) magmb,cmbh,epsbh,raccr,facc,betaf,dmtde,
+     *    embhc,rtmode,ntde,nplunge
+        IF (IOSMB.NE.0.OR.MAGMB.NE.44071) THEN
+            BACKSPACE J
+            CMBH = 0.0D0
+            NTDE = 0
+            NPLUNGE = 0
+        END IF
 *
         read (J) ((u(k,i),k=1,4),i=1,npairs),((u0(k,i),k=1,4),i=1,
      *    npairs),((udot(k,i),k=1,4),i=1,npairs),((fu(k,i),k=1,4),i=1,

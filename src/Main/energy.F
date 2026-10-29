@@ -5,6 +5,7 @@
 *       -------------
 *
       INCLUDE 'common6.h'
+      REAL*8  MBHPOTE
       COMMON/POTDEN/  RHO(NMAX),XNDBL(NMAX),PHIDBL(NMAX)
       logical iscale
 *
@@ -111,6 +112,7 @@
       IF (KZ(14).EQ.0) THEN
 *       Note: EPL holds accumulated tidal energy if KZ(14) = 3.
           EPL = 0.0D0
+          IF (KZ(44).GT.0) EPL = MBHPOTE()
       ELSE IF (KZ(14).LE.2) THEN
 *       Employ general expression sum {m*r*F} for virial energy.
           CALL XTRNLV(1,N)

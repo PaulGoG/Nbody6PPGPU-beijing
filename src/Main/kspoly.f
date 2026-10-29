@@ -7,7 +7,8 @@
       INCLUDE 'common6.h'
 *     Safe for parallel
       COMMON/SLOW0/  RANGE,ISLOW(10)
-      REAL*8  A1(3,4),A(8),FP(4),FPDOT(3),UI(4),UIDOT(4)
+      REAL*8  A1(3,4),A(8),FP(4),FPDOT(3),UI(4),UIDOT(4),FB1(3),
+     &        FD1B(3),FB2(3),FD2B(3)
       REAL*8  B2(3,4),U2(4),Q2(4)
 *
 *
@@ -87,6 +88,22 @@
           VX = XDOT(1,I1) - XDOT(1,I2)
           VZ = XDOT(3,I1) - XDOT(3,I2)
           CALL XTRNLP(VX,VZ,FPDOT)
+      END IF
+*
+*       Tidal difference of the static black hole (KZ(44) = 1).
+      IF (KZ(44).GT.0) THEN
+          DO 42 K = 1,3
+              FB1(K) = 0.0D0
+              FD1B(K) = 0.0D0
+              FB2(K) = 0.0D0
+              FD2B(K) = 0.0D0
+   42     CONTINUE
+          CALL MBHFORCE(X(1,I1),XDOT(1,I1),FB1,FD1B)
+          CALL MBHFORCE(X(1,I2),XDOT(1,I2),FB2,FD2B)
+          DO 43 K = 1,3
+              FP(K) = FP(K) + FB1(K) - FB2(K)
+              FPDOT(K) = FPDOT(K) + FD1B(K) - FD2B(K)
+   43     CONTINUE
       END IF
 *
 *       Transform to regularized force derivative using T' = R.

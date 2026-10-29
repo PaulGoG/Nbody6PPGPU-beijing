@@ -75,6 +75,8 @@
 *       Initial massive black hole input
       IF (KZ(24).EQ.1) CALL IMBHINIT
       IF (KZ(24).EQ.3) CALL IMBHFLAG
+*       Static massive black hole at the origin (&INMBH).
+      IF (KZ(44).GT.0) CALL MBHINIT
 *
 *       Set sequential name, maximum mass & primary velocity, initial single/binary total mass
       BODY1 = 0.0

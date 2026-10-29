@@ -5,6 +5,7 @@
 *       -----------------------
 *
       INCLUDE 'common6.h'
+      REAL*8  FB1(3),FB2(3),FDB(3)
       COMMON/CLUMP/   BODYS(NCMAX,5),T0S(5),TS(5),STEPS(5),RMAXS(5),
      &                NAMES(NCMAX,5),ISYS(5)
       REAL*8 RJMIN2
@@ -175,6 +176,20 @@ c$$$          end if
 *
 *       Evaluate vectorial perturbation due to the close bodies.
       CALL FPERT(I,JCOMP,NCLOSE,PERT)
+*
+*       Add the tidal force of the static black hole (KZ(44) = 1), so that
+*       no pair is regularized deep in its field.
+      IF (KZ(44).GT.0) THEN
+          DO 26 K = 1,3
+              FB1(K) = 0.0D0
+              FB2(K) = 0.0D0
+              FDB(K) = 0.0D0
+   26     CONTINUE
+          CALL MBHFORCE(X(1,I),XDOT(1,I),FB1,FDB)
+          CALL MBHFORCE(X(1,JCOMP),XDOT(1,JCOMP),FB2,FDB)
+          PERT = PERT + SQRT((FB1(1) - FB2(1))**2 +
+     &           (FB1(2) - FB2(2))**2 + (FB1(3) - FB2(3))**2)
+      END IF
 *
 *       Accept #I & JCOMP if the relative motion is dominant (GI < 0.25).
       GI = PERT*RJMIN2/BCM

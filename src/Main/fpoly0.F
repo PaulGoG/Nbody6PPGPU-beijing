@@ -292,6 +292,7 @@ c$$$     &            'IREG',IREG(IOFF:2+IOFF)
       IF (KZ(14).GT.0) THEN
           CALL XTRNLD(istart+ifirst-1,iend+ifirst-1,1)
       END IF
+      IF (KZ(44).GT.0) CALL MBHFPOLY(istart+ifirst-1,iend+ifirst-1)
 *
 *
 #ifdef PARALLEL

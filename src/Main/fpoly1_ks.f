@@ -182,6 +182,7 @@ c$$$      call mpi_barrier(MPI_COMM_WORLD,ierr)
       IF (KZ(14).GT.0) THEN
           CALL XTRNLD(I1,I2,1)
       END IF
+      IF (KZ(44).GT.0) CALL MBHFPOLY(I1,I2)
 *
 *       Set total force & first derivative.
       DO 50 I = I1,I2

@@ -117,6 +117,8 @@ c$$$      end if
    75     CONTINUE
           CALL XTRNLF(XI,XIDOT,FIRR,FREG,FD,FDUM,0)
       END IF
+*       Static massive black hole at the origin (KZ(44) = 1).
+      IF (KZ(44).GT.0) CALL MBHFORCE(XI,XIDOT,FIRR,FD)
 *
 *       Include the corrector and set new F, FDOT, D1, D2 & D3.
       DTSQ = DT**2
