@@ -140,6 +140,16 @@ the same source as `v2026.07.6`).
   down to β = 0.6 or 0.5 the star loses that fraction of its mass with the matching energy and keeps its orbit
   (`TDE PARTIAL`, at most one per pericentre passage). The black-hole mass stays fixed (`FACC` is read and
   checked only). Restart dumps carry the black hole as an optional record [v2026.07.13].
+- `kspn.f`, `kspn.h`, `kscorr.f`, `resolv.f`, `energy.F`, `energy_mpi.F`, `remove.f`, `mydump.F`: the work of the
+  PN terms of `KZ(43)` is booked as their part of the two-point Hermite rule by which `KSCORR` advances h (start values
+  stored per pair, keyed on HDOT and HDOT2, moved with the pair, dumped), the PN part of a prediction that ends a step
+  early is booked by `RESOLV`, and `ENERGY` leaves the PN part of the predicted h out of `EBIN`; the energy check then
+  closes exactly. The booking of v2026.07.12 (the change of the conservative PN energy and a separate quadrature of
+  the 2.5PN work) left about 4×10⁻⁴ of the radiated energy, which halted an embedded run whose binary radiated 10⁷
+  times the energy of the cluster [v2026.07.14].
+- `fpoly0.F`: the start-up neighbour radius is bisected once radii with too few and too many neighbours are known; a
+  star far outside an untruncated Plummer sphere could alternate between the two for ever, and the run never started
+  [v2026.07.14].
 - From upstream `dev`, cherry-picked with their authorship: supernova ghosts removed from neighbour and
   perturber lists in `mdot.F`, ghost guards in `coal.f`, `chterm.f`, `expel.f`, `expel2.f`; `lagr.f`
   cumulative statistics and initialised radii under KZ(8) = 0; the Eggleton IMF exponent in `imf2.f`; HDF5
