@@ -9,7 +9,7 @@
 *     safe for parallel, no value change, used value: islow
       COMMON/SLOW0/  RANGE,ISLOW(10)
       REAL*8  UI(4),UIDOT(4),FP(6),FD(6),FREG(4),FRD(4),A1(3,4),A(8),
-     &        PR(4),PRD(4),U2(4),U3(4),U4(4),U5(4),FD1(3)
+     &        PR(4),PRD(4),U2(4),U3(4),U4(4),U5(4),FD1(3),U2X(4)
       PARAMETER  (ITLOW=2)
 *
 *       Convert from physical to regularized derivative using T' = R.
@@ -20,10 +20,12 @@
     1 CONTINUE
 *
 *       Include KS slow-down factor in the perturbation if ZMOD > 1.
+      ZPN = 1.0D0
       IF (KZ(26).GT.0) THEN
           IMOD = KSLOW(IPAIR)
           IF (IMOD.GT.1) THEN
               ZMOD = FLOAT(ISLOW(IMOD))
+              ZPN = ZMOD
               DO 5 K = 1,3
                   FP(K) = ZMOD*FP(K)
                   FD(K) = ZMOD*FD(K)
@@ -100,6 +102,16 @@
               FREG(K) = 0.5D0*FREG(K)
    15     CONTINUE
 *
+*       PN parts of HD and HD2 as the last iteration forms them (2u'' =
+*       h u + r L^T P with the total P), for the booking of KSPNBK.
+          IF (LPNSTEP.EQ.1.AND.ITER.EQ.ITMAX) THEN
+              DO 16 K = 1,4
+                  U2X(K) = H(IPAIR)*UI(K) + 2.0D0*FREG(K)
+   16         CONTINUE
+              CALL KSPNHD(UI,UIDOT,U2X,RI,ZPN,FPN,FDPN,HP1,H2P1)
+              CALL KSPNHD(UI,UIDOT,U2X,RI,ZPN,FRR,FDRR,HR1,H2R1)
+          END IF
+*
 *       Determine new derivatives of U evaluated at beginning of the step.
           DO 20 K = 1,4
               DF = FP0(K,IPAIR) - FREG(K)
@@ -167,9 +179,16 @@
           DH = DH0 + (0.25D0*AT3 + ONE3*BT2)*DTU
    40 CONTINUE
 *
-*       Work of the post-Newtonian terms over the step (KZ(43)).
-      IF (LPNSTEP.EQ.1) THEN
-          CALL KSPNBK(IPAIR,UI,UIDOT,FP,RI,H(IPAIR)+DH,DTU)
+*       Work of the post-Newtonian terms over the step (KZ(43)), also
+*       on the first step without them (PN part of the start values).
+      IF (KZ(43).GT.0) THEN
+          IF (LPNSTEP.EQ.0) THEN
+              HP1 = 0.0D0
+              H2P1 = 0.0D0
+              HR1 = 0.0D0
+              H2R1 = 0.0D0
+          END IF
+          CALL KSPNBK(IPAIR,UI,UIDOT,RI,DTU,HP1,H2P1,HR1,H2R1,HD,HD2)
       END IF
 *
 *       Copy final values and set higher derivatives.

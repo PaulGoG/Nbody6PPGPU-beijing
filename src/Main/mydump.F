@@ -37,6 +37,7 @@
       COMMON/BINARY/ S(NS)
       COMMON/IMBHS/  NIMBHS,NAMEBH(16)
       INCLUDE 'mbh.h'
+      INCLUDE 'kspn.h'
 *
       COMMON/NBODY/  X(3,NMAX),XDOT(3,NMAX),X0(3,NMAX),X0DOT(3,NMAX),
      &               F(3,NMAX),FDOT(3,NMAX),BODY(NMAX),RS(NMAX),
@@ -139,6 +140,10 @@
 *       Static black hole (KZ(44)), led by the marker 44071.
         write (IU) 44071,cmbh,epsbh,raccr,facc,betaf,dmtde,embhc,
      *    rtmode,ipart,ntde,npart,nplunge
+*       KS post-Newtonian state (KZ(43)), led by the marker 43071.
+        write (IU) 43071,epnw,epnrr,npnstp,((hpns(k,i),k=1,4),i=1,
+     *    npairs),((hrrs(k,i),k=1,4),i=1,npairs),((hpkey(k,i),k=1,2),
+     *    i=1,npairs)
 *
         write (IU) ((u(k,i),k=1,4),i=1,npairs),((u0(k,i),k=1,4),i=1,
      *    npairs),((udot(k,i),k=1,4),i=1,npairs),((fu(k,i),k=1,4),i=1,
@@ -290,6 +295,24 @@
             NTDE = 0
             NPART = 0
             NPLUNGE = 0
+        END IF
+*       A dump without the PN record: the start values of the PN parts
+*       of HDOT are taken as zero (KSPNBK).
+        read (J,IOSTAT=IOSPN) magpn,epnw,epnrr,npnstp,
+     *    ((hpns(k,i),k=1,4),i=1,npairs),((hrrs(k,i),k=1,4),
+     *    i=1,npairs),((hpkey(k,i),k=1,2),i=1,npairs)
+        IF (IOSPN.NE.0.OR.MAGPN.NE.43071) THEN
+            BACKSPACE J
+            EPNW = 0.0D0
+            EPNRR = 0.0D0
+            NPNSTP = 0
+            DO 82 I = 1,NPAIRS
+                DO 81 K = 1,4
+                    HPNS(K,I) = 0.0D0
+                    HRRS(K,I) = 0.0D0
+                    IF (K.LE.2) HPKEY(K,I) = 0.0D0
+   81           CONTINUE
+   82       CONTINUE
         END IF
 *
         read (J) ((u(k,i),k=1,4),i=1,npairs),((u0(k,i),k=1,4),i=1,

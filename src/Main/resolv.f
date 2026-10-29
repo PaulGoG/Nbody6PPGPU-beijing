@@ -5,6 +5,7 @@
 *       -------------------------------
 *
       INCLUDE 'common6.h'
+      INCLUDE 'kspn.h'
 *     Save for parallel
       COMMON/SLOW0/  RANGE,ISLOW(10)
       REAL*8  Q(3),RDOT(3),UI(4),V(4),A1(3,4)
@@ -24,6 +25,8 @@
 *
 *       Copy binding energy for routine ENERGY.
           HT = H(IPAIR)
+          DHPNP = 0.0D0
+          DHRRP = 0.0D0
           GO TO 4
       END IF
 *
@@ -58,6 +61,10 @@
 *       Predict current binding energy per unit mass for routine ADJUST.
       HT = (((HDOT4(IPAIR)*DTU2 + ONE6*HDOT3(IPAIR))*DTU +
      &             0.5D0*HDOT2(IPAIR))*DTU + HDOT(IPAIR))*DTU + H(IPAIR)
+*       Its part from the PN terms (KZ(43)), booked when KDUM > 1.
+      DHPNP = 0.0D0
+      DHRRP = 0.0D0
+      IF (KZ(43).GT.0) CALL KSPNPRD(IPAIR,KDUM,DTU)
 *
 *       Form current transformation matrix and two-body separation.
     4 CALL MATRIX(UI,A1)

@@ -5,6 +5,7 @@
 *       -----------------
 *
       INCLUDE 'common6.h'
+      INCLUDE 'kspn.h'
       COMMON/XPRED/ TPRED(NMAX),TRES(KMAX),ipredall
       REAL*8 TPRED,A(6)
       LOGICAL ipredall
@@ -136,6 +137,12 @@
           SF(7,JPAIR) = SF(7,JP1)
           H0(JPAIR) = H0(JP1)
           TRES(JPAIR) = TRES(JP1)
+*       PN parts of HDOT, HDOT2 and their keys (KZ(43), KSPNBK).
+          DO 28 K = 1,4
+              HPNS(K,JPAIR) = HPNS(K,JP1)
+              HRRS(K,JPAIR) = HRRS(K,JP1)
+              IF (K.LE.2) HPKEY(K,JPAIR) = HPKEY(K,JP1)
+   28     CONTINUE
    30 CONTINUE
 *
    50 RETURN

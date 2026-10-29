@@ -5,6 +5,7 @@
 *       -------------
 *
       INCLUDE 'common6.h'
+      INCLUDE 'kspn.h'
       REAL*8  MBHPOTE
       COMMON/POTDEN/  RHO(NMAX),XNDBL(NMAX),PHIDBL(NMAX)
       logical iscale
@@ -18,7 +19,8 @@
             IF (BODY(N+IPAIR).GT.0.0D0) THEN
 *     Predict coordinates, velocities & binding energy.
                CALL RESOLV(IPAIR,1)
-               EBIN = EBIN + BODY(2*IPAIR-1)*BODY(2*IPAIR)*HT/
+*     The PN part of the predicted h is booked at the end of the step.
+               EBIN = EBIN + BODY(2*IPAIR-1)*BODY(2*IPAIR)*(HT - DHPNP)/
      &              BODY(N+IPAIR)
             END IF
  10      CONTINUE

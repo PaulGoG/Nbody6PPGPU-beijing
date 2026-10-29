@@ -254,91 +254,63 @@
       END
 *
 *
-      SUBROUTINE KSPNBK(IPAIR,UI,UIDOT,FP,RI,HNEW,DTU)
+      SUBROUTINE KSPNBK(IPAIR,UI,UIDOT,RI,DTU,HP1,H2P1,HR1,H2R1,
+     &                  HD1,HD21)
 *
 *
 *       Work of the post-Newtonian terms over one KS step.
 *       --------------------------------------------------
 *
-*       The 1PN and 2PN terms conserve E_N + E_PN (PNENER) to O(c^-6):
-*       their work is booked as mu times the change of E_PN between the
-*       ends of the step, which sums exactly over steps; a quadrature of
-*       their work, oscillating by ~ m/(c^2 r) E_N per orbit, would not.
-*       The 2.5PN work enters by the two-point Hermite quadrature of
-*       KSCORR, DH = (HD0 + HD1) dtau/2 + (HD20 - HD21) dtau^2/12, with
-*       HD = 2 u'.L(u)^T P and HD2 = 2 u''.L(u)^T P + 2 u'.(L(u)^T P'
-*       + L(u')^T P) at the corrected end (terms of the step, total FP)
-*       and at the start (U0, UDOT, Newtonian acceleration). The sum
-*       enters ECOLL and E(10), the 2.5PN part also EGRAV, so that the
-*       total energy stays conserved with h Newtonian.
+*       KSCORR advances h by the two-point Hermite rule
+*       DH = (HD0 + HD1) dtau/2 + (HD20 - HD21) dtau^2/12, linear in the
+*       four derivatives. Its part from the PN terms (start values HPNS,
+*       end values HP1, H2P1 of all orders; HRRS, HR1, H2R1 of 2.5PN) is
+*       booked as their work, into ECOLL and E(10), the 2.5PN part also
+*       into EGRAV, so that the energy check sees the h change of the
+*       Newtonian perturbation alone, exactly. The start values hold
+*       while HDOT and HDOT2 are those this routine saw at the end of
+*       the last step (HPKEY); KSPOLY recomputes them without the PN
+*       terms. HD1, HD21: the new HDOT, HDOT2. RESOLV books the PN part
+*       of a prediction into the step (DHPNP) when it ends the step early,
+*       and ENERGY leaves it out of EBIN. With KZ(43) bit 16 every 64th PN
+*       step writes the corrected elements and the booked work.
 *
       INCLUDE 'common6.h'
       INCLUDE 'kspn.h'
-      COMMON/SLOW0/  RANGE,ISLOW(10)
-      REAL*8  UI(4),UIDOT(4),FP(6),A1(3,4),U2E(4),U2S(4),UZ(4),UZD(4),
-     &        XR(3),VR(3),ZERO3(3),P0(3),PD0(3),QR0(3),QRD0(3),PNENER,
-     &        GV(3)
+      REAL*8  UI(4),UIDOT(4),A1(3,4),XR(3),VR(3)
+*
+      HP0 = 0.0D0
+      H2P0 = 0.0D0
+      HR0 = 0.0D0
+      H2R0 = 0.0D0
+      IF (HPKEY(1,IPAIR).EQ.HDOT(IPAIR).AND.
+     &    HPKEY(2,IPAIR).EQ.HDOT2(IPAIR)) THEN
+          HP0 = HPNS(1,IPAIR)
+          H2P0 = HPNS(2,IPAIR)
+          HR0 = HRRS(1,IPAIR)
+          H2R0 = HRRS(2,IPAIR)
+      END IF
+*       New values and the PN parts of HDOT3, HDOT4 as KSCORR forms them.
+      HPNS(1,IPAIR) = HP1
+      HPNS(2,IPAIR) = H2P1
+      HRRS(1,IPAIR) = HR1
+      HRRS(2,IPAIR) = H2R1
+      CALL KSPNH34(HP0,HP1,H2P0,H2P1,DTU,HPNS(3,IPAIR),HPNS(4,IPAIR))
+      CALL KSPNH34(HR0,HR1,H2R0,H2R1,DTU,HRRS(3,IPAIR),HRRS(4,IPAIR))
+      HPKEY(1,IPAIR) = HD1
+      HPKEY(2,IPAIR) = HD21
+      IF (HP0.EQ.0.0D0.AND.H2P0.EQ.0.0D0.AND.HP1.EQ.0.0D0.AND.
+     &    H2P1.EQ.0.0D0) RETURN
 *
       I1 = 2*IPAIR - 1
       I2 = I1 + 1
       ZM1 = BODY(I1)
       ZM2 = BODY(I2)
       ZMU = ZM1*ZM2/(ZM1 + ZM2)
-      ZMOD = 1.0D0
-      IF (KZ(26).GT.0.AND.KSLOW(IPAIR).GT.1) THEN
-          ZMOD = FLOAT(ISLOW(KSLOW(IPAIR)))
-      END IF
-*
-*       End of the step: 2u'' = h u + r L^T P (P total, slow-down incl.).
-      CALL MATRIX(UI,A1)
-      DO 5 K = 1,4
-          U2E(K) = HNEW*UI(K) + RI*(A1(1,K)*FP(1) + A1(2,K)*FP(2) +
-     &                              A1(3,K)*FP(3))
-    5 CONTINUE
-      CALL KSPNHD(UI,UIDOT,U2E,R(IPAIR),ZMOD,FRR,FDRR,GE,GE2)
-*
-*       Start of the step: relative motion from U0, UDOT.
-      DO 10 K = 1,4
-          UZ(K) = U0(K,IPAIR)
-          UZD(K) = UDOT(K,IPAIR)
-          U2S(K) = H0(IPAIR)*UZ(K) + 2.0D0*FP0(K,IPAIR)
-   10 CONTINUE
-      R0S = UZ(1)**2 + UZ(2)**2 + UZ(3)**2 + UZ(4)**2
-      XR(1) = UZ(1)**2 - UZ(2)**2 - UZ(3)**2 + UZ(4)**2
-      XR(2) = 2.0D0*(UZ(1)*UZ(2) - UZ(3)*UZ(4))
-      XR(3) = 2.0D0*(UZ(1)*UZ(3) + UZ(2)*UZ(4))
-      CALL MATRIX(UZ,A1)
-      DO 15 L = 1,3
-          VR(L) = 2.0D0*(A1(L,1)*UZD(1) + A1(L,2)*UZD(2) +
-     &                   A1(L,3)*UZD(3) + A1(L,4)*UZD(4))/R0S
-          ZERO3(L) = 0.0D0
-   15 CONTINUE
-      CALL KSPNACC(XR,VR,ZM1,ZM2,ZERO3,MOD(KZ(43),8),P0,PD0,QR0,QRD0)
-      CALL KSPNHD(UZ,UZD,U2S,R0S,ZMOD,QR0,QRD0,GS,GS2)
-      ES = PNENER(XR,VR,ZM1,ZM2,MOD(KZ(43),8))
-      CALL PNEGRAD(XR,VR,ZM1,ZM2,MOD(KZ(43),8),GV)
-      CRS = R0S*(GV(1)*QR0(1) + GV(2)*QR0(2) + GV(3)*QR0(3))
-*
-*       End state for the conservative energy.
-      XR(1) = UI(1)**2 - UI(2)**2 - UI(3)**2 + UI(4)**2
-      XR(2) = 2.0D0*(UI(1)*UI(2) - UI(3)*UI(4))
-      XR(3) = 2.0D0*(UI(1)*UI(3) + UI(2)*UI(4))
-      CALL MATRIX(UI,A1)
-      DO 20 L = 1,3
-          VR(L) = 2.0D0*(A1(L,1)*UIDOT(1) + A1(L,2)*UIDOT(2) +
-     &                   A1(L,3)*UIDOT(3) + A1(L,4)*UIDOT(4))/RI
-   20 CONTINUE
-      EE = PNENER(XR,VR,ZM1,ZM2,MOD(KZ(43),8))
-      CALL PNEGRAD(XR,VR,ZM1,ZM2,MOD(KZ(43),8),GV)
-      CRE = RI*(GV(1)*FRR(1) + GV(2)*FRR(2) + GV(3)*FRR(3))
-*
-*       Conservative orders: the change of their energy (exact sum over
-*       steps) less its part due to the 2.5PN force, dE_PN/dv . a_RR
-*       (an O(c^-7) cross term, trapezoidal rule in tau); 2.5PN: the
-*       Hermite quadrature of its work.
-      DHRR = 0.5D0*(GS + GE)*DTU + (GS2 - GE2)*DTU**2/12.0D0
+      DHPN = 0.5D0*(HP0 + HP1)*DTU + (H2P0 - H2P1)*DTU**2/12.0D0
+      DHRR = 0.5D0*(HR0 + HR1)*DTU + (H2R0 - H2R1)*DTU**2/12.0D0
+      DEPN = -ZMU*DHPN
       DERR = -ZMU*DHRR
-      DEPN = ZMU*(EE - ES - 0.5D0*(CRS + CRE)*DTU) + DERR
       ECOLL = ECOLL + DEPN
       E(10) = E(10) + DEPN
       EGRAV = EGRAV + DERR
@@ -348,7 +320,7 @@
 *       Diagnostic line at the corrected end of the step (KZ(43) bit 16):
 *       elements, eccentricity vector, distance, h, booked work.
       IF (MOD(KZ(43)/16,2).EQ.1.AND.MOD(NPNSTP,64).EQ.1.AND.
-     &    rank.eq.0) THEN
+     &    LPNSTEP.EQ.1.AND.rank.eq.0) THEN
           XR(1) = UI(1)**2 - UI(2)**2 - UI(3)**2 + UI(4)**2
           XR(2) = 2.0D0*(UI(1)*UI(2) - UI(3)*UI(4))
           XR(3) = 2.0D0*(UI(1)*UI(3) + UI(2)*UI(4))
@@ -410,89 +382,67 @@
       END
 *
 *
-      REAL*8 FUNCTION PNENER(XR,VR,ZM1,ZM2,IPN)
+      SUBROUTINE KSPNH34(HD0,HD1,HD20,HD21,DTU,HD3,HD4)
 *
 *
-*       Conservative PN energy of a two-body system per reduced mass.
-*       -------------------------------------------------------------
+*       Third and fourth derivatives of h as KSCORR forms them.
+*       -------------------------------------------------------
 *
-*       Centre-of-mass frame, harmonic coordinates, the 1PN (bit 1) and
-*       2PN (bit 2) parts of E/mu (Kidder 1995, Phys. Rev. D 52, 821,
-*       Eq. 2.7; 10.1103/PhysRevD.52.821), G = 1, c = CLIGHT; with the
-*       accelerations of KSPNACC, E_N + E_PN is conserved to O(c^-6).
+*       Linear in the four end values, so applied to their PN parts it
+*       gives the PN parts of HDOT3 and HDOT4.
 *
-      INCLUDE 'common6.h'
-      REAL*8  XR(3),VR(3)
-      INTEGER  IPN
+      IMPLICIT REAL*8 (A-H,O-Z)
 *
-      ZM = ZM1 + ZM2
-      ZNU = ZM1*ZM2/ZM**2
-      RR = SQRT(XR(1)**2 + XR(2)**2 + XR(3)**2)
-      ZU = ZM/RR
-      RD = (XR(1)*VR(1) + XR(2)*VR(2) + XR(3)*VR(3))/RR
-      W = VR(1)**2 + VR(2)**2 + VR(3)**2
-      CI2 = 1.0D0/CLIGHT**2
-      EPN = 0.0D0
-      IF (MOD(IPN,2).EQ.1) THEN
-          EPN = EPN + CI2*(0.375D0*(1.0D0 - 3.0D0*ZNU)*W**2 +
-     &          0.5D0*ZU*((3.0D0 + ZNU)*W + ZNU*RD**2 + ZU))
-      END IF
-      IF (MOD(IPN/2,2).EQ.1) THEN
-          EPN = EPN + CI2**2*(
-     &        0.3125D0*(1.0D0 - 7.0D0*ZNU + 13.0D0*ZNU**2)*W**3 +
-     &        0.125D0*ZU*((21.0D0 - 23.0D0*ZNU - 27.0D0*ZNU**2)*W**2
-     &          + 2.0D0*ZNU*(1.0D0 - 15.0D0*ZNU)*W*RD**2
-     &          - 3.0D0*ZNU*(1.0D0 - 3.0D0*ZNU)*RD**4) +
-     &        0.125D0*ZU**2*((14.0D0 - 55.0D0*ZNU + 4.0D0*ZNU**2)*W
-     &          + (4.0D0 + 69.0D0*ZNU + 12.0D0*ZNU**2)*RD**2) -
-     &        0.25D0*ZU**3*(2.0D0 + 15.0D0*ZNU))
-      END IF
-      PNENER = EPN
+      DHD = HD0 - HD1
+      SUM = HD20 + HD21
+      BT2 = -3.0D0*DHD - (SUM + HD20)*DTU
+      AT3 = 2.0D0*DHD + SUM*DTU
+      HD3 = (3.0D0*AT3 + BT2)*2.0D0/DTU**2
+      HD4 = AT3*6.0D0/DTU**3
 *
       RETURN
 *
       END
 *
 *
-      SUBROUTINE PNEGRAD(XR,VR,ZM1,ZM2,IPN,GV)
+      SUBROUTINE KSPNPRD(IPAIR,KDUM,DTU)
 *
 *
-*       Velocity gradient of the conservative PN energy (PNENER).
-*       ---------------------------------------------------------
+*       PN part of the h prediction of RESOLV.
+*       --------------------------------------
 *
-*       dE_PN/dv = 2 (dE/dW) v + (dE/dRD) n with W = v.v, RD = n.v.
+*       DHPNP, DHRRP: the parts of HT = H + Taylor series in HDOT..HDOT4
+*       due to the PN terms (stored by KSPNBK, valid while HPKEY holds).
+*       With KDUM > 1 the prediction replaces the step (termination, or
+*       H = HT in MDOT): the part is booked like a step and the stored
+*       values cleared, so that it is booked once.
 *
       INCLUDE 'common6.h'
-      REAL*8  XR(3),VR(3),GV(3)
-      INTEGER  IPN
+      INCLUDE 'kspn.h'
 *
-      ZM = ZM1 + ZM2
-      ZNU = ZM1*ZM2/ZM**2
-      RR = SQRT(XR(1)**2 + XR(2)**2 + XR(3)**2)
-      ZU = ZM/RR
-      RD = (XR(1)*VR(1) + XR(2)*VR(2) + XR(3)*VR(3))/RR
-      W = VR(1)**2 + VR(2)**2 + VR(3)**2
-      CI2 = 1.0D0/CLIGHT**2
-      EW = 0.0D0
-      ER = 0.0D0
-      IF (MOD(IPN,2).EQ.1) THEN
-          EW = EW + CI2*(0.75D0*(1.0D0 - 3.0D0*ZNU)*W +
-     &         0.5D0*ZU*(3.0D0 + ZNU))
-          ER = ER + CI2*ZU*ZNU*RD
-      END IF
-      IF (MOD(IPN/2,2).EQ.1) THEN
-          EW = EW + CI2**2*(
-     &        0.9375D0*(1.0D0 - 7.0D0*ZNU + 13.0D0*ZNU**2)*W**2 +
-     &        0.125D0*ZU*(2.0D0*(21.0D0 - 23.0D0*ZNU - 27.0D0*ZNU**2)*W
-     &          + 2.0D0*ZNU*(1.0D0 - 15.0D0*ZNU)*RD**2) +
-     &        0.125D0*ZU**2*(14.0D0 - 55.0D0*ZNU + 4.0D0*ZNU**2))
-          ER = ER + CI2**2*(
-     &        0.125D0*ZU*(4.0D0*ZNU*(1.0D0 - 15.0D0*ZNU)*W*RD
-     &          - 12.0D0*ZNU*(1.0D0 - 3.0D0*ZNU)*RD**3) +
-     &        0.25D0*ZU**2*(4.0D0 + 69.0D0*ZNU + 12.0D0*ZNU**2)*RD)
-      END IF
-      DO 10 K = 1,3
-          GV(K) = 2.0D0*EW*VR(K) + ER*XR(K)/RR
+      DHPNP = 0.0D0
+      DHRRP = 0.0D0
+      IF (HPKEY(1,IPAIR).NE.HDOT(IPAIR).OR.
+     &    HPKEY(2,IPAIR).NE.HDOT2(IPAIR)) RETURN
+      DTU2 = DTU/24.0D0
+      DHPNP = (((HPNS(4,IPAIR)*DTU2 + ONE6*HPNS(3,IPAIR))*DTU +
+     &         0.5D0*HPNS(2,IPAIR))*DTU + HPNS(1,IPAIR))*DTU
+      DHRRP = (((HRRS(4,IPAIR)*DTU2 + ONE6*HRRS(3,IPAIR))*DTU +
+     &         0.5D0*HRRS(2,IPAIR))*DTU + HRRS(1,IPAIR))*DTU
+      IF (KDUM.LT.2.OR.DHPNP.EQ.0.0D0) RETURN
+*
+      I1 = 2*IPAIR - 1
+      ZMU = BODY(I1)*BODY(I1+1)/(BODY(I1) + BODY(I1+1))
+      DEPN = -ZMU*DHPNP
+      DERR = -ZMU*DHRRP
+      ECOLL = ECOLL + DEPN
+      E(10) = E(10) + DEPN
+      EGRAV = EGRAV + DERR
+      EPNW = EPNW + DEPN
+      EPNRR = EPNRR + DERR
+      DO 10 K = 1,4
+          HPNS(K,IPAIR) = 0.0D0
+          HRRS(K,IPAIR) = 0.0D0
    10 CONTINUE
 *
       RETURN
