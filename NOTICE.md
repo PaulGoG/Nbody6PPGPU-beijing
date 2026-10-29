@@ -162,6 +162,17 @@ the same source as `v2026.07.6`).
 - `mbh.F`: with `FACC > 0` the black hole grows by `FACC` of every disrupted or stripped mass and by the whole of a
   plunging star; the energy change of all bodies in the deeper potential enters `ECOLL` and their force polynomials
   receive the change of the black hole's force. `FACC` now defaults to 0 (no growth) [v2026.07.17].
+- `output.F`: the energy formed between adjustments includes `EPL`, as `ADJUST`'s does; an output between two
+  adjustments made the next one report the external potential energy (linearised tide, static black hole) as an
+  energy error [v2026.07.18].
+- `remove_ks.F`: the PN state of a KS pair (v2026.07.14) moves with the pair when `KSTERM` renumbers it [v2026.07.18].
+- `mbh.F`, `mbh.h`, `fpoly2.f`, `fpoly2_ks.f`, `fpoly2_mpi.f`, `unpert.f`, `kslist.f`: a full or partial disruption goes
+  through `FCORR` (the pull of the removed mass leaves the force polynomials of all other bodies; its energy is booked
+  as a mass loss, `EMDOT`, instead of `ECOLL`); chain c.m. and merged bodies are not tested; the once-per-passage
+  guard of partial disruptions is kept by name and released beyond three times the pericentre of the last event;
+  black-hole growth updates `FIDOT`; `FPOLY2` adds the black hole's second and third force derivatives; a KS pair
+  within the black hole's tidal range keeps a nominal perturber (so `KSPERT` applies the tide) and `UNPERT` ends an
+  unperturbed interval before the pair enters that range [v2026.07.18].
 - From upstream `dev`, cherry-picked with their authorship: supernova ghosts removed from neighbour and
   perturber lists in `mdot.F`, ghost guards in `coal.f`, `chterm.f`, `expel.f`, `expel2.f`; `lagr.f`
   cumulative statistics and initialised radii under KZ(8) = 0; the Eggleton IMF exponent in `imf2.f`; HDF5
