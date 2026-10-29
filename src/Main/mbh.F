@@ -63,7 +63,7 @@
       DMTDE = 0.0D0
       EMBHC = 0.0D0
       DO 15 I = 1,NMAX
-          TPART(I) = -1.0D+30
+          QPART(I) = 0.0D0
    15 CONTINUE
       IF (rank.eq.0) WRITE (6,20)  MBH, CMBH, EPSPC, RTMODE, RACCRPC,
      &                             FACC, BETAF, IPART
@@ -193,7 +193,8 @@
       DO 20 L = 1,NXTLEN
           I = NXTLST(L)
           IF (I.GT.N.OR.I.LT.IFIRST) GO TO 20
-          IF (BODY(I).LE.0.0D0) GO TO 20
+*       Stars only: no ghost, chain c.m. (NAME 0) or merged body.
+          IF (BODY(I).LE.0.0D0.OR.NAME(I).LE.0) GO TO 20
           ZMU = CMBH + BODY(I)
           RR = SQRT(X0(1,I)**2 + X0(2,I)**2 + X0(3,I)**2)
           V2 = X0DOT(1,I)**2 + X0DOT(2,I)**2 + X0DOT(3,I)**2
@@ -211,10 +212,17 @@
           ELSE
               RT = RACCR
           END IF
+*       One partial event per pericentre passage: after an event the star
+*       is guarded until it is beyond three times that pericentre again.
+          NM = NAME(I)
+          IF (NM.LE.NMAX) THEN
+              IF (QPART(NM).GT.0.0D0) THEN
+                  IF (RR.LT.3.0D0*QPART(NM)) GO TO 20
+                  QPART(NM) = 0.0D0
+              END IF
+          END IF
           RCAP = MAX(RT/BETP,RPL)
           IF (QP.GE.RCAP) GO TO 20
-*       One partial event per pericentre passage.
-          IF (TIME - TPART(I).LT.4.0D0*STEP(I)) GO TO 20
 *       Time between the present position and the pericentre.
           TP = PERITIME(RR,QP,ECC,EPS,ZMU)
           IF ((RD.LT.0.0D0.AND.TP.LE.STEP(I)).OR.
@@ -288,10 +296,9 @@
 *       -----------------------------------------------------------
 *
 *       The star's energy in the cluster and black-hole potentials,
-*       E = m v^2/2 - m sum m_j/r_ij - m M/r (the other bodies predicted
-*       to TIME), is booked into ECOLL, so that the total energy stays
-*       continuous when its kinetic and potential terms vanish; its mass
-*       leaves ZMASS. The star becomes a ghost as in COAL: zero mass, far
+*       E = m v^2/2 - m sum m_j/r_ij - m M/r, is booked by FCORR as a
+*       mass loss (EMDOT), which also takes its pull out of the force
+*       polynomials of all other bodies; its mass leaves ZMASS. The star becomes a ghost as in COAL: zero mass, far
 *       from the cluster, in the ghost part of the block list. Stamped
 *       line 'TDE' (KIND 1, disruption) or 'TDE PLUNGE' (KIND 2,
 *       q < 4 G M/c^2 above r_t): time, name, type, mass, radius, q,
@@ -318,7 +325,8 @@
       R2 = X0(1,I)**2 + X0(2,I)**2 + X0(3,I)**2 + EPSBH**2
       V2 = X0DOT(1,I)**2 + X0DOT(2,I)**2 + X0DOT(3,I)**2
       EI = ZM*(0.5D0*V2 + POTI - CMBH/SQRT(R2))
-      ECOLL = ECOLL + EI
+*       Forces of all bodies without the star, and its energy into EMDOT.
+      CALL FCORR(I,ZM,0)
       EMBHC = EMBHC + EI
       ZMASS = ZMASS - ZM
       DMTDE = DMTDE + ZM
@@ -383,9 +391,10 @@
 *
 *       The star loses DM = C(beta) m at its pericentre (Guillochon &
 *       Ramirez-Ruiz 2013, Appendix, fits for gamma = 4/3 (IPART 1) and
-*       5/3 (IPART 2)) and keeps its position and velocity; the energy
-*       of the stripped mass in the cluster and black-hole potentials
-*       enters ECOLL and its mass leaves ZMASS. Stamped line
+*       5/3 (IPART 2)) and keeps its position and velocity; FCORR books
+*       the energy of the stripped mass in the cluster and black-hole
+*       potentials (EMDOT) and corrects the forces of all other bodies;
+*       the mass leaves ZMASS. Stamped line
 *       'TDE PARTIAL': time, name, type, mass before, radius, q, r_t,
 *       beta, booked energy, stripped mass [Msun].
 *
@@ -419,13 +428,15 @@
       R2 = X0(1,I)**2 + X0(2,I)**2 + X0(3,I)**2 + EPSBH**2
       V2 = X0DOT(1,I)**2 + X0DOT(2,I)**2 + X0DOT(3,I)**2
       EI = DM*(0.5D0*V2 + POTI - CMBH/SQRT(R2))
-      ECOLL = ECOLL + EI
+*       Forces of all bodies without the stripped mass, its energy into
+*       EMDOT.
+      CALL FCORR(I,DM,0)
       EMBHC = EMBHC + EI
       ZMASS = ZMASS - DM
       DMTDE = DMTDE + DM
       BODY(I) = ZM - DM
       NPART = NPART + 1
-      TPART(I) = TIME
+      IF (NAME(I).GE.1.AND.NAME(I).LE.NMAX) QPART(NAME(I)) = QP
       IF (FACC.GT.0.0D0) CALL MBHGROW(FACC*DM)
       IF (rank.eq.0) WRITE (6,20)  TIME+TOFF, NAME(I), KSTAR(I),
      &    ZM*ZMBAR, RADIUS(I)*SU, QP*RBAR, RT*RBAR, BETA, EI, DM*ZMBAR
@@ -470,7 +481,7 @@
 *       that the total energy stays continuous. The force polynomials of
 *       every single body and KS c.m. receive the change of the black
 *       hole's force and its time derivative, as FCORR does for a mass
-*       loss: F and FI by the force, FDOT and D1 by the jerk.
+*       loss: F and FI by the force, FDOT, D1 and FIDOT by the jerk.
 *
       INCLUDE 'common6.h'
       INCLUDE 'mbh.h'
@@ -495,6 +506,7 @@
               DDK = -RIN3*(VJ(K) - RV*XJ(K))
               FI(K,J) = FI(K,J) + DFK
               D1(K,J) = D1(K,J) + DDK
+              FIDOT(K,J) = FIDOT(K,J) + DDK
               F(K,J) = F(K,J) + 0.5D0*DFK
               FDOT(K,J) = FDOT(K,J) + ONE6*DDK
    10     CONTINUE
@@ -503,6 +515,95 @@
       ECOLL = ECOLL + DMACC*SUM
       EMBHC = EMBHC + DMACC*SUM
       CMBH = CMBH + DMACC
+*
+      RETURN
+*
+      END
+*
+*
+      SUBROUTINE MBHFPOLY2(I1,I2)
+*
+*
+*       Second and third derivatives of the black hole's force.
+*       --------------------------------------------------------
+*
+*       Called by FPOLY2 with F and FDOT the total force and its first
+*       derivative of bodies I1..I2: the pairwise formulas of FPOLY2 for
+*       a fixed mass CMBH at the origin (zero velocity, acceleration and
+*       jerk), softened by EPSBH, added to the irregular D2 and D3.
+*
+      INCLUDE 'common6.h'
+      INCLUDE 'mbh.h'
+      REAL*8  A(12)
+*
+      DO 30 I = I1,I2
+          IF (BODY(I).LE.0.0D0) GO TO 30
+          DO 5 K = 1,3
+              A(K) = -X(K,I)
+              A(K+3) = -XDOT(K,I)
+              A(K+6) = -F(K,I)
+              A(K+9) = -FDOT(K,I)
+    5     CONTINUE
+          A13 = 1.0D0/(A(1)**2 + A(2)**2 + A(3)**2 + EPSBH**2)
+          A14 = CMBH*A13*SQRT(A13)
+          A15 = (A(1)*A(4) + A(2)*A(5) + A(3)*A(6))*A13
+          A16 = A15*A15
+          A17 = 3.0D0*A15
+          A18 = 6.0D0*A15
+          A19 = 9.0D0*A15
+          A20 = (A(4)**2 + A(5)**2 + A(6)**2 + A(1)*A(7) +
+     &           A(2)*A(8) + A(3)*A(9))*A13 + A16
+          A21 = 9.0D0*A20
+          A20 = 3.0D0*A20
+          A22 = (9.0D0*(A(4)*A(7) + A(5)*A(8) + A(6)*A(9)) +
+     &           3.0D0*(A(1)*A(10) + A(2)*A(11) + A(3)*A(12)))*A13 +
+     &           A17*(A20 - 4.0D0*A16)
+          DO 10 K = 1,3
+              F1DOTK = A(K+3) - A17*A(K)
+              F2K = (A(K+6) - A18*F1DOTK - A20*A(K))*A14
+              F3K = (A(K+9) - A21*F1DOTK - A22*A(K))*A14 - A19*F2K
+              D2(K,I) = D2(K,I) + F2K
+              D3(K,I) = D3(K,I) + F3K
+   10     CONTINUE
+   30 CONTINUE
+*
+      RETURN
+*
+      END
+*
+*
+      REAL*8 FUNCTION MBHDTU(IPAIR)
+*
+*
+*       Unperturbed interval allowed by the black hole's tide.
+*       ------------------------------------------------------
+*
+*       For the KS pair IPAIR, the tidal perturbation at the apocentre,
+*       2 CMBH a^3 (1 + e)^3 / (m r^3) at the c.m. distance r, reaches
+*       GMIN at r_g; MBHDTU is 0 inside r_g and (r - r_g)/|v_r| for a c.m.
+*       moving inward from outside (1e30 moving outward), so that UNPERT
+*       switches to perturbed motion before the tide matters.
+*
+      INCLUDE 'common6.h'
+      INCLUDE 'mbh.h'
+*
+      MBHDTU = 1.0D+30
+      I = N + IPAIR
+      I1 = 2*IPAIR - 1
+      IF (BODY(I).LE.0.0D0.OR.H(IPAIR).GE.0.0D0) RETURN
+      SEMI = -0.5D0*BODY(I)/H(IPAIR)
+      ECC2 = (1.0D0 - R(IPAIR)/SEMI)**2 +
+     &       TDOT2(IPAIR)**2/(BODY(I)*SEMI)
+      RAP = SEMI*(1.0D0 + SQRT(MAX(ECC2,0.0D0)))
+      RG = (2.0D0*CMBH*RAP**3/(BODY(I)*GMIN))**(1.0D0/3.0D0)
+      RI = SQRT(X(1,I)**2 + X(2,I)**2 + X(3,I)**2 + EPSBH**2)
+      IF (RI.LE.RG) THEN
+          MBHDTU = 0.0D0
+      ELSE
+          VR = (X(1,I)*XDOT(1,I) + X(2,I)*XDOT(2,I) +
+     &          X(3,I)*XDOT(3,I))/RI
+          IF (VR.LT.0.0D0) MBHDTU = (RI - RG)/(-VR)
+      END IF
 *
       RETURN
 *

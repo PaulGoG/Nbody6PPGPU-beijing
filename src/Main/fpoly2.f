@@ -139,6 +139,9 @@ c$$$      end if
           CALL XTRNLD(I1,I2,2)
       END IF
 *
+*       Static black hole (KZ(44)): its second and third derivatives.
+      IF (KZ(44).GT.0) CALL MBHFPOLY2(I1,I2)
+*
 *       Set new time-steps and initialize prediction variables.
       CALL STEPS(I1,I2)
 *

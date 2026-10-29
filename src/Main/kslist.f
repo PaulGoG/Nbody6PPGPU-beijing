@@ -5,6 +5,7 @@
 *       -----------------------
 *
       INCLUDE 'common6.h'
+      REAL*8  MBHDTU
 *
 *
 *       Set component & c.m. index and form semi-major axis & eccentricity.
@@ -85,6 +86,16 @@
 *       Skip repeat for small size (next KSLIST requires many periods).
 *         IF ((SEMI*SU.GT.10.0.AND.IT.LE.5).OR.KSTAR(I).EQ.-1) GO TO 6
 *     END IF
+*
+*       Static black hole (KZ(44)): a pair within its tidal range keeps a
+*       nominal perturber, so that KSPERT applies the tide.
+      IF (NNB1.EQ.1.AND.KZ(44).GT.0.AND.LIST(1,I).GT.0) THEN
+          IF (MBHDTU(IPAIR).LE.0.0D0) THEN
+              NNB1 = 2
+              LIST(2,I1) = LIST(2,I)
+              GO TO 20
+          END IF
+      END IF
 *
 *       Check case of no perturbers (dual purpose).
       IF (NNB1.EQ.1) THEN

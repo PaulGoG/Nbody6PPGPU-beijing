@@ -7,9 +7,10 @@
 *       Ruiz (2013) for gamma = 4/3, 5/3 (BETAF unused). FACC: fraction of
 *       the disrupted mass the black hole would gain (growth not yet
 *       implemented). NTDE, NPART, NPLUNGE: events; DMTDE: mass removed;
-*       EMBHC: energy booked; TPART: time of a star's last partial event.
-      REAL*8  CMBH,EPSBH,RACCR,FACC,BETAF,DMTDE,EMBHC,TPART
+*       EMBHC: energy booked; QPART(NAME): pericentre of a star's last
+*       partial event, cleared once the star is beyond 3 QPART again.
+      REAL*8  CMBH,EPSBH,RACCR,FACC,BETAF,DMTDE,EMBHC,QPART
       INTEGER  RTMODE,IPART,NTDE,NPART,NPLUNGE
       COMMON/MBHC/  CMBH,EPSBH,RACCR,FACC,BETAF,DMTDE,EMBHC,
      &              RTMODE,IPART,NTDE,NPART,NPLUNGE
-      COMMON/MBHT/  TPART(NMAX)
+      COMMON/MBHT/  QPART(NMAX)

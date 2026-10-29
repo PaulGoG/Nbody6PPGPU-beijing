@@ -6,6 +6,7 @@
 *
       Include 'kspars.h'
       INCLUDE 'common6.h'
+      REAL*8  MBHDTU
       include 'timing.h'
       REAL*8  UI(4),UIDOT(4),A_EIN,CL2
       INTEGER  RES
@@ -75,6 +76,8 @@
       if(rank.eq.0)tttp = tttp + (tt2-tt1)*60.
       JCL = IPAIR
       IPAIR = IP
+*       Static black hole (KZ(44)): end the interval before its tide acts.
+      IF (KZ(44).GT.0) DT = MIN(DT,MBHDTU(IPAIR))
 *
 *       Restore KS indicator and re-initialize if interval < period.
       IF (DT.LT.TK) THEN
