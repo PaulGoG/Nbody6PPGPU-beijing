@@ -155,6 +155,10 @@ the same source as `v2026.07.6`).
   within its neighbour radius of that point received it as a neighbour, the list comparison of `REGCOR_GPU` ran past
   its sentinel and beyond LMAX, and the run died of SIGSEGV. The dummy now sits at 10¹⁸ and list indices beyond NTOT
   are dropped [v2026.07.15].
+- `mbh.F`, `fcorr.F`, `ficorr.F`, `expel.f`, `expel2.f`, `escape.F`: the energy of mass lost by stellar evolution and
+  common envelopes and of escapers includes the potential of the static black hole of `KZ(44)` (as it did for the
+  external potentials of `KZ(14)`); before, every wind or supernova near the black hole changed the total energy
+  [v2026.07.16].
 - From upstream `dev`, cherry-picked with their authorship: supernova ghosts removed from neighbour and
   perturber lists in `mdot.F`, ghost guards in `coal.f`, `chterm.f`, `expel.f`, `expel2.f`; `lagr.f`
   cumulative statistics and initialised radii under KZ(8) = 0; the Eggleton IMF exponent in `imf2.f`; HDF5
