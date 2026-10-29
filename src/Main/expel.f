@@ -5,6 +5,7 @@
 *       -------------------------------------------
 *
       INCLUDE 'common6.h'
+      REAL*8  MBHPOT
       COMMON/MODES/  EB0(NTMAX),ZJ0(NTMAX),ECRIT(NTMAX),AR(NTMAX),
      &               BR(NTMAX),EOSC(4,NTMAX),EDEC(NTMAX),TOSC(NTMAX),
      &               RP(NTMAX),ES(NTMAX),CM(2,NTMAX),IOSC(NTMAX),
@@ -275,6 +276,8 @@ cnew-abbas-26/07/2017
 *       Include potential and kinetic energy corrections due to mass loss.
               CALL POTI(I,POTJ)
               ECDOT = ECDOT + DM*POTJ + 0.5d0*DM*VI2
+*       Potential of the static black hole (KZ(44)).
+              IF (KZ(44).GT.0) ECDOT = ECDOT - DM*MBHPOT(X(1,I))
 *
 *       See whether tidal terms should be included (standard or scaled).
               IF (KZ(14).GT.0) THEN

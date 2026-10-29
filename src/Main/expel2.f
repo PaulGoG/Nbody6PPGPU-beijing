@@ -5,6 +5,7 @@
 *       ---------------------------------------
 *
       INCLUDE 'common6.h'
+      REAL*8  MBHPOT
       PARAMETER  (NMX=10,NMX2=2*NMX,NMX3=3*NMX,NMX4=4*NMX,
      &            NMX8=8*NMX,NMXm=NMX*(NMX-1)/2)
       REAL*8  M,MASS,MC,MIJ,MKK,XCM(3),XREL(3),VCM(3),VREL(3)
@@ -301,6 +302,8 @@
 *
 *       Add both potential energy contributions to yield final correction.
           ECDOT = ECDOT + DM*POTJ + (POT2 - POT1)
+*       Potential of the static black hole at the c.m. (KZ(44)).
+          IF (KZ(44).GT.0) ECDOT = ECDOT - DM*MBHPOT(XCM)
 *
           if(rank.eq.0)then
           WRITE (6,55)  DM*POTJ, SQRT(RX), SEMI00*SU, SEMI0*SU, EBS

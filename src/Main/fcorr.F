@@ -5,6 +5,7 @@
 *       ------------------------------------------
 *
       INCLUDE 'common6.h'
+      REAL*8  MBHPOT
       INCLUDE 'omp_lib.h'
       REAL*8  A(6),VOLD(3)
       LOGICAL IKICK
@@ -199,6 +200,9 @@ c$$$      END DO
   50      CONTINUE
           EMDOT = EMDOT - DM*MP/SQRT(RI2)
       END IF
+*
+*       Potential of the static black hole (KZ(44)).
+      IF (KZ(44).GT.0) EMDOT = EMDOT - DM*MBHPOT(X(1,I))
 *
 *       Accumulate energy loss for conservation check (not used).
       E(12) = EMDOT

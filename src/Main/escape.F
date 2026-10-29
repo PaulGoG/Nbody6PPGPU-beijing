@@ -5,6 +5,7 @@
 *       ----------------
 *
       INCLUDE 'common6.h'
+      REAL*8  MBHPOT
 #ifdef TT
       include 'tt.h'
 #endif
@@ -89,6 +90,7 @@
  8          CONTINUE
 *     Check escape criterion for tidal case or isolated system.
             EI = 0.5*VI2 - POTI
+            IF (KZ(44).GT.0) EI = EI - MBHPOT(X(1,I))
 #ifdef TT
 *** FlorentR - add nbody6tt
           IF (KZ(14).EQ.4.OR.KZ(14).EQ.3.OR.KZ(14).EQ.5
@@ -244,6 +246,8 @@
           ZK = ZK + HT
       END IF
       EI = ZK - BODY(I)*POTI
+*       Potential of the static black hole (KZ(44)).
+      IF (KZ(44).GT.0) EI = EI - BODY(I)*MBHPOT(X(1,I))
 *
 *       Update tidal radius in case of tidal cutoff (R.Sp.)
       IF(KZ(23).EQ.3)THEN

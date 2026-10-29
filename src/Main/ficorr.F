@@ -5,6 +5,7 @@
 *       -----------------------------------------
 *
       INCLUDE 'common6.h'
+      REAL*8  MBHPOT
       INCLUDE 'omp_lib.h'
       REAL*8  A(6)
 *      REAL*8  XBACK(3,LMAX)
@@ -90,6 +91,9 @@
   50      CONTINUE
           EMDOT = EMDOT - DM*MP/SQRT(RI2)
       END IF
+*
+*       Potential of the static black hole (KZ(44)).
+      IF (KZ(44).GT.0) EMDOT = EMDOT - DM*MBHPOT(X(1,I))
 *
       RETURN
 *

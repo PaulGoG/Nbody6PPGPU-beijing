@@ -427,3 +427,25 @@
       RETURN
 *
       END
+*
+*
+      REAL*8 FUNCTION MBHPOT(XI)
+*
+*
+*       Depth of the black-hole potential at XI (KZ(44) = 1).
+*       -----------------------------------------------------
+*
+*       CMBH/(r^2 + EPSBH^2)^(1/2), positive: the energy corrections of
+*       mass loss (FCORR, FICORR, EXPEL, EXPEL2) and of escapers (ESCAPE)
+*       subtract mass times it, as they do for the external Plummer
+*       potential.
+*
+      INCLUDE 'common6.h'
+      INCLUDE 'mbh.h'
+      REAL*8  XI(3)
+*
+      MBHPOT = CMBH/SQRT(XI(1)**2 + XI(2)**2 + XI(3)**2 + EPSBH**2)
+*
+      RETURN
+*
+      END
