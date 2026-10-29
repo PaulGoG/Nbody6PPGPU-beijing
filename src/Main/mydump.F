@@ -138,7 +138,7 @@
         write (IU) nimbhs,(namebh(i),i=1,16)
 *       Static black hole (KZ(44)), led by the marker 44071.
         write (IU) 44071,cmbh,epsbh,raccr,facc,betaf,dmtde,embhc,
-     *    rtmode,ntde,nplunge
+     *    rtmode,ipart,ntde,npart,nplunge
 *
         write (IU) ((u(k,i),k=1,4),i=1,npairs),((u0(k,i),k=1,4),i=1,
      *    npairs),((udot(k,i),k=1,4),i=1,npairs),((fu(k,i),k=1,4),i=1,
@@ -283,11 +283,12 @@
 *       A dump without the black-hole record (earlier tags): the next
 *       record is read again as the KS data, the black hole stays off.
         read (J,IOSTAT=IOSMB) magmb,cmbh,epsbh,raccr,facc,betaf,dmtde,
-     *    embhc,rtmode,ntde,nplunge
+     *    embhc,rtmode,ipart,ntde,npart,nplunge
         IF (IOSMB.NE.0.OR.MAGMB.NE.44071) THEN
             BACKSPACE J
             CMBH = 0.0D0
             NTDE = 0
+            NPART = 0
             NPLUNGE = 0
         END IF
 *

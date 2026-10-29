@@ -5,7 +5,7 @@
 *       -----------------------------------------------------
 *
 *       Reads &INMBH after the IMBH input of START: MBH [Msun], EPSPC
-*       [pc], RTMODE, RACCRPC [pc], FACC, BETAF (mbh.h). The black hole
+*       [pc], RTMODE, RACCRPC [pc], FACC, BETAF, IPART (mbh.h). The black hole
 *       is a fixed point mass at the coordinate origin acting on the
 *       irregular force of every body (MBHFORCE), on KS perturbations as
 *       a tidal difference and in the initial polynomials (MBHFPOLY); its
@@ -16,7 +16,7 @@
       INCLUDE 'common6.h'
       INCLUDE 'mbh.h'
       REAL*8  MBH,EPSPC,RACCRPC
-      NAMELIST /INMBH/ MBH,EPSPC,RTMODE,RACCRPC,FACC,BETAF
+      NAMELIST /INMBH/ MBH,EPSPC,RTMODE,RACCRPC,FACC,BETAF,IPART
 *
       MBH = 0.0D0
       EPSPC = 0.0D0
@@ -24,6 +24,7 @@
       RACCRPC = 0.0D0
       FACC = 0.5D0
       BETAF = 1.0D0
+      IPART = 0
       IF (rank.eq.0) THEN
           READ (NML=INMBH, IOSTAT=IIC, UNIT=5)
           IF (IIC.NE.0) THEN
@@ -38,12 +39,13 @@
       CALL MPI_BCAST(RACCRPC,1,MPI_REAL8,0,MPI_COMM_WORLD,ierr)
       CALL MPI_BCAST(FACC,1,MPI_REAL8,0,MPI_COMM_WORLD,ierr)
       CALL MPI_BCAST(BETAF,1,MPI_REAL8,0,MPI_COMM_WORLD,ierr)
+      CALL MPI_BCAST(IPART,1,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
 #endif
       IF (MBH.LE.0.0D0.OR.KZ(14).NE.0.OR.EPSPC.LT.0.0D0.OR.
      &    BETAF.LE.0.0D0.OR.FACC.LT.0.0D0.OR.FACC.GT.1.0D0.OR.
      &    (RTMODE.EQ.1.AND.KZ(19).LT.3).OR.
      &    (RTMODE.EQ.2.AND.RACCRPC.LE.0.0D0).OR.
-     &    RTMODE.LT.1.OR.RTMODE.GT.2) THEN
+     &    RTMODE.LT.1.OR.RTMODE.GT.2.OR.IPART.LT.0.OR.IPART.GT.2) THEN
           IF (rank.eq.0) WRITE (6,10)  MBH, EPSPC, RTMODE, RACCRPC,
      &                                 FACC, BETAF, KZ(14), KZ(19)
    10     FORMAT (' MBHINIT: invalid MBH',1P,2E12.4,I3,3E12.4,
@@ -54,13 +56,17 @@
       EPSBH = EPSPC/RBAR
       RACCR = RACCRPC/RBAR
       NTDE = 0
+      NPART = 0
       NPLUNGE = 0
       DMTDE = 0.0D0
       EMBHC = 0.0D0
+      DO 15 I = 1,NMAX
+          TPART(I) = -1.0D+30
+   15 CONTINUE
       IF (rank.eq.0) WRITE (6,20)  MBH, CMBH, EPSPC, RTMODE, RACCRPC,
-     &                             FACC, BETAF
+     &                             FACC, BETAF, IPART
    20 FORMAT (/,' MBH STATIC: M[Msun] M[NB] EPS[pc] RTMODE RACCR[pc] ',
-     &        'FACC BETAF ',1P,3E13.5,I3,3E13.5)
+     &        'FACC BETAF IPART ',1P,3E13.5,I3,3E13.5,I3)
 *
       RETURN
 *
@@ -150,12 +156,18 @@
 *
 *       For every single star of the current block, the two-body orbit
 *       about the black hole (corrected X0, X0DOT) gives the pericentre q
-*       and the time to (or since) it. The star is removed (MBHTDE) when
-*       q is below the capture radius, max(r_t/BETAF, 4 G M/c^2), and the
-*       pericentre lies within its next step ahead or 2 steps behind, so
-*       that a passage between two steps is not missed (a test of the
-*       sampled position alone would be). r_t = R* (M/m)^(1/3) under
-*       RTMODE 1, RACCR under RTMODE 2. IACC = number of removals.
+*       and the time to (or since) it. An event is due when q is below the
+*       capture radius and the pericentre lies within the star's next step
+*       ahead or 2 steps behind, so that a passage between two steps is
+*       not missed (a test of the sampled position alone would be):
+*       q < 4 G M/c^2 above r_t: plunge; beta = r_t/q >= beta_d: full
+*       disruption (MBHTDE); beta_p <= beta < beta_d under IPART > 0: the
+*       star loses the fraction C(beta) of Guillochon & Ramirez-Ruiz
+*       (2013, Appendix; 10.1088/0004-637X/767/1/25) and keeps its orbit
+*       (MBHPART), once per passage. IPART 0: beta_d = BETAF, no partial;
+*       1 (gamma = 4/3): beta_p = 0.6, beta_d = 1.85; 2 (5/3): 0.5, 0.9.
+*       r_t = R* (M/m)^(1/3) under RTMODE 1, RACCR under RTMODE 2. IACC =
+*       number of events.
 *
       INCLUDE 'common6.h'
       INCLUDE 'tlist.h'
@@ -166,6 +178,16 @@
       IACC = 0
       NCAND = 0
       RPL = 4.0D0*CMBH/CLIGHT**2
+      IF (IPART.EQ.1) THEN
+          BETP = 0.6D0
+          BETD = 1.85D0
+      ELSE IF (IPART.EQ.2) THEN
+          BETP = 0.5D0
+          BETD = 0.9D0
+      ELSE
+          BETP = BETAF
+          BETD = BETAF
+      END IF
       DO 20 L = 1,NXTLEN
           I = NXTLST(L)
           IF (I.GT.N.OR.I.LT.IFIRST) GO TO 20
@@ -187,8 +209,10 @@
           ELSE
               RT = RACCR
           END IF
-          RCAP = MAX(RT/BETAF,RPL)
+          RCAP = MAX(RT/BETP,RPL)
           IF (QP.GE.RCAP) GO TO 20
+*       One partial event per pericentre passage.
+          IF (TIME - TPART(I).LT.4.0D0*STEP(I)) GO TO 20
 *       Time between the present position and the pericentre.
           TP = PERITIME(RR,QP,ECC,EPS,ZMU)
           IF ((RD.LT.0.0D0.AND.TP.LE.STEP(I)).OR.
@@ -198,15 +222,24 @@
                   LCAND(NCAND) = I
                   QCAND(NCAND) = QP
                   RCAND(NCAND) = RT
-                  KCAND(NCAND) = 1
-                  IF (RT.LT.RPL*BETAF) KCAND(NCAND) = 2
+                  IF (QP.LT.RPL.AND.RT.LT.RPL*BETD) THEN
+                      KCAND(NCAND) = 2
+                  ELSE IF (RT.GE.BETD*QP) THEN
+                      KCAND(NCAND) = 1
+                  ELSE
+                      KCAND(NCAND) = 3
+                  END IF
               END IF
           END IF
    20 CONTINUE
 *
 *       Removals after the scan (they modify the block list).
       DO 30 L = 1,NCAND
-          CALL MBHTDE(LCAND(L),QCAND(L),RCAND(L),KCAND(L))
+          IF (KCAND(L).EQ.3) THEN
+              CALL MBHPART(LCAND(L),QCAND(L),RCAND(L))
+          ELSE
+              CALL MBHTDE(LCAND(L),QCAND(L),RCAND(L),KCAND(L))
+          END IF
           IACC = IACC + 1
    30 CONTINUE
 *
@@ -329,6 +362,67 @@
           D2R(K,I) = 0.0D0
           D3R(K,I) = 0.0D0
    30 CONTINUE
+*
+      RETURN
+*
+      END
+*
+*
+      SUBROUTINE MBHPART(I,QP,RT)
+*
+*
+*       Partial tidal disruption of a star at the black hole.
+*       -----------------------------------------------------
+*
+*       The star loses DM = C(beta) m at its pericentre (Guillochon &
+*       Ramirez-Ruiz 2013, Appendix, fits for gamma = 4/3 (IPART 1) and
+*       5/3 (IPART 2)) and keeps its position and velocity; the energy
+*       of the stripped mass in the cluster and black-hole potentials
+*       enters ECOLL and its mass leaves ZMASS. Stamped line
+*       'TDE PARTIAL': time, name, type, mass before, radius, q, r_t,
+*       beta, booked energy, stripped mass [Msun].
+*
+      INCLUDE 'common6.h'
+      INCLUDE 'mbh.h'
+      REAL*8  XJ(3)
+*
+      BETA = RT/QP
+      IF (IPART.EQ.1) THEN
+          FRAC = EXP((12.996D0 - 31.149D0*BETA + 12.865D0*BETA**2)/
+     &               (1.0D0 - 5.3232D0*BETA + 6.4262D0*BETA**2))
+      ELSE
+          FRAC = EXP((3.1647D0 - 6.3777D0*BETA + 3.1797D0*BETA**2)/
+     &               (1.0D0 - 3.4137D0*BETA + 2.4616D0*BETA**2))
+      END IF
+      FRAC = MIN(MAX(FRAC,0.0D0),1.0D0)
+      ZM = BODY(I)
+      DM = FRAC*ZM
+      POTI = 0.0D0
+      DO 10 J = IFIRST,NTOT
+          IF (J.EQ.I.OR.BODY(J).LE.0.0D0) GO TO 10
+          DT = TIME - T0(J)
+          DO 5 K = 1,3
+              XJ(K) = ((FDOT(K,J)*DT + F(K,J))*DT + X0DOT(K,J))*DT +
+     &                X0(K,J)
+    5     CONTINUE
+          RIJ = SQRT((XJ(1) - X0(1,I))**2 + (XJ(2) - X0(2,I))**2 +
+     &               (XJ(3) - X0(3,I))**2)
+          POTI = POTI - BODY(J)/RIJ
+   10 CONTINUE
+      R2 = X0(1,I)**2 + X0(2,I)**2 + X0(3,I)**2 + EPSBH**2
+      V2 = X0DOT(1,I)**2 + X0DOT(2,I)**2 + X0DOT(3,I)**2
+      EI = DM*(0.5D0*V2 + POTI - CMBH/SQRT(R2))
+      ECOLL = ECOLL + EI
+      EMBHC = EMBHC + EI
+      ZMASS = ZMASS - DM
+      DMTDE = DMTDE + DM
+      BODY(I) = ZM - DM
+      NPART = NPART + 1
+      TPART(I) = TIME
+      IF (rank.eq.0) WRITE (6,20)  TIME+TOFF, NAME(I), KSTAR(I),
+     &    ZM*ZMBAR, RADIUS(I)*SU, QP*RBAR, RT*RBAR, BETA, EI, DM*ZMBAR
+   20 FORMAT (1X,'TDE PARTIAL T[NB] NAME K* M[M*] R*[R*] Q[PC] RT[PC] ',
+     &        'BETA E[NB] DM[M*]',1P,E17.10,I10,I4,4E13.5,E11.3,2E13.5)
 *
       RETURN
 *
