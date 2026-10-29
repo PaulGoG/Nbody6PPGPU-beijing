@@ -138,8 +138,8 @@ the same source as `v2026.07.6`).
   `IPART = 1, 2` replaces the full-disruption threshold by the stripped fraction of Guillochon & Ramirez-Ruiz
   (2013, DOI 10.1088/0004-637X/767/1/25) for γ = 4/3 or 5/3: full disruption above β = 1.85 or 0.9, below that
   down to β = 0.6 or 0.5 the star loses that fraction of its mass with the matching energy and keeps its orbit
-  (`TDE PARTIAL`, at most one per pericentre passage). The black-hole mass stays fixed (`FACC` is read and
-  checked only). Restart dumps carry the black hole as an optional record [v2026.07.13].
+  (`TDE PARTIAL`, at most one per pericentre passage). The black-hole mass stays fixed in this tag (`FACC` is
+  read and checked only; growth from v2026.07.17). Restart dumps carry the black hole as an optional record [v2026.07.13].
 - `kspn.f`, `kspn.h`, `kscorr.f`, `resolv.f`, `energy.F`, `energy_mpi.F`, `remove.f`, `mydump.F`: the work of the
   PN terms of `KZ(43)` is booked as their part of the two-point Hermite rule by which `KSCORR` advances h (start values
   stored per pair, keyed on HDOT and HDOT2, moved with the pair, dumped), the PN part of a prediction that ends a step
@@ -159,6 +159,9 @@ the same source as `v2026.07.6`).
   common envelopes and of escapers includes the potential of the static black hole of `KZ(44)` (as it did for the
   external potentials of `KZ(14)`); before, every wind or supernova near the black hole changed the total energy
   [v2026.07.16].
+- `mbh.F`: with `FACC > 0` the black hole grows by `FACC` of every disrupted or stripped mass and by the whole of a
+  plunging star; the energy change of all bodies in the deeper potential enters `ECOLL` and their force polynomials
+  receive the change of the black hole's force. `FACC` now defaults to 0 (no growth) [v2026.07.17].
 - From upstream `dev`, cherry-picked with their authorship: supernova ghosts removed from neighbour and
   perturber lists in `mdot.F`, ghost guards in `coal.f`, `chterm.f`, `expel.f`, `expel2.f`; `lagr.f`
   cumulative statistics and initialised radii under KZ(8) = 0; the Eggleton IMF exponent in `imf2.f`; HDF5
