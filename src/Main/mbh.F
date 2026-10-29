@@ -11,7 +11,9 @@
 *       a tidal difference and in the initial polynomials (MBHFPOLY); its
 *       potential energy enters EPL. A single star whose orbit about it
 *       reaches r_t/BETAF, or 4 G M/c^2, is removed at its pericentre
-*       passage (MBHCHECK, MBHTDE). Requires KZ(14) = 0.
+*       passage (MBHCHECK, MBHTDE). With FACC > 0 the black hole gains
+*       FACC of every disrupted or stripped mass and the whole of a
+*       plunging star (MBHGROW). Requires KZ(14) = 0.
 *
       INCLUDE 'common6.h'
       INCLUDE 'mbh.h'
@@ -22,7 +24,7 @@
       EPSPC = 0.0D0
       RTMODE = 2
       RACCRPC = 0.0D0
-      FACC = 0.5D0
+      FACC = 0.0D0
       BETAF = 1.0D0
       IPART = 0
       IF (rank.eq.0) THEN
@@ -323,10 +325,15 @@
       IF (KIND.EQ.1) THEN
           NTDE = NTDE + 1
           WHICH = 'TDE       '
+          DMACC = FACC*ZM
       ELSE
           NPLUNGE = NPLUNGE + 1
           WHICH = 'TDE PLUNGE'
+          DMACC = ZM
       END IF
+*       Growth: the star is a ghost below, so it does not see the change.
+      BODY(I) = 0.0D0
+      IF (FACC.GT.0.0D0) CALL MBHGROW(DMACC)
       BETA = RT/QP
       IF (rank.eq.0) WRITE (6,20)  WHICH, TIME+TOFF, NAME(I), KSTAR(I),
      &    ZM*ZMBAR, RADIUS(I)*SU, QP*RBAR, RT*RBAR, BETA, EI, CMBH*ZMBAR
@@ -419,6 +426,7 @@
       BODY(I) = ZM - DM
       NPART = NPART + 1
       TPART(I) = TIME
+      IF (FACC.GT.0.0D0) CALL MBHGROW(FACC*DM)
       IF (rank.eq.0) WRITE (6,20)  TIME+TOFF, NAME(I), KSTAR(I),
      &    ZM*ZMBAR, RADIUS(I)*SU, QP*RBAR, RT*RBAR, BETA, EI, DM*ZMBAR
    20 FORMAT (1X,'TDE PARTIAL T[NB] NAME K* M[M*] R*[R*] Q[PC] RT[PC] ',
@@ -445,6 +453,56 @@
       REAL*8  XI(3)
 *
       MBHPOT = CMBH/SQRT(XI(1)**2 + XI(2)**2 + XI(3)**2 + EPSBH**2)
+*
+      RETURN
+*
+      END
+*
+*
+      SUBROUTINE MBHGROW(DMACC)
+*
+*
+*       Growth of the static black hole by DMACC (N-body mass).
+*       -------------------------------------------------------
+*
+*       The deeper potential lowers the energy of every body by DMACC
+*       m_j/r_j (r_j softened by EPSBH); the sum is booked into ECOLL so
+*       that the total energy stays continuous. The force polynomials of
+*       every single body and KS c.m. receive the change of the black
+*       hole's force and its time derivative, as FCORR does for a mass
+*       loss: F and FI by the force, FDOT and D1 by the jerk.
+*
+      INCLUDE 'common6.h'
+      INCLUDE 'mbh.h'
+      REAL*8  XJ(3),VJ(3),SUM
+*
+      SUM = 0.0D0
+      DO 20 J = IFIRST,NTOT
+          IF (BODY(J).LE.0.0D0) GO TO 20
+          DT = TIME - T0(J)
+          DO 5 K = 1,3
+              XJ(K) = ((FDOT(K,J)*DT + F(K,J))*DT + X0DOT(K,J))*DT +
+     &                X0(K,J)
+              VJ(K) = (3.0D0*FDOT(K,J)*DT + 2.0D0*F(K,J))*DT +
+     &                X0DOT(K,J)
+    5     CONTINUE
+          R2 = XJ(1)**2 + XJ(2)**2 + XJ(3)**2 + EPSBH**2
+          RIN = 1.0D0/SQRT(R2)
+          RIN3 = DMACC*RIN**3
+          RV = 3.0D0*(XJ(1)*VJ(1) + XJ(2)*VJ(2) + XJ(3)*VJ(3))/R2
+          DO 10 K = 1,3
+              DFK = -RIN3*XJ(K)
+              DDK = -RIN3*(VJ(K) - RV*XJ(K))
+              FI(K,J) = FI(K,J) + DFK
+              D1(K,J) = D1(K,J) + DDK
+              F(K,J) = F(K,J) + 0.5D0*DFK
+              FDOT(K,J) = FDOT(K,J) + ONE6*DDK
+   10     CONTINUE
+          SUM = SUM + BODY(J)*RIN
+   20 CONTINUE
+      ECOLL = ECOLL + DMACC*SUM
+      EMBHC = EMBHC + DMACC*SUM
+      CMBH = CMBH + DMACC
 *
       RETURN
 *
