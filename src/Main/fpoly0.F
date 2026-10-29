@@ -13,6 +13,7 @@
       REAL*8   X_I(3,NIMAX),V_I(3,NIMAX)
 #ifdef GPU
       REAL*8   H2I(NIMAX),GPUPHI(NIMAX),GPU_DTR(NIMAX)
+      REAL*8   RSLO(NIMAX),RSHI(NIMAX)
 #endif
       REAL*8   DV(3)
       INTEGER  LISTGP(LMAX,NIMAX),NOFL2,NOFL3,M_FLAG
@@ -123,8 +124,11 @@
               GPU_DTR(LL) = STEPR(I)
               X_I(1:3,LL) = X(1:3,I)
               V_I(1:3,LL) = XDOT(1:3,I)
+              RSLO(LL) = 0.0D0
+              RSHI(LL) = 0.0D0
    30     CONTINUE
 !!$omp end parallel do
+          NREP = 0
 *
 *       Evaluate forces, first derivatives and neighbour lists for new block.
  31       I = JNEXT + IFIRST
@@ -145,7 +149,12 @@
 *    &                   I4,2I11,I8,1P,2E13.5)
 *                    CALL FLUSH(41)
 *     For smooth density system, use NNBOPT/NNB to estimate the neighbor radius
-                     IF(NB_FLAG.EQ.1) THEN
+*     (bisection once a radius with too few neighbours is known: an outlying
+*     star can jump from below two to overflow and back for ever).
+                     RSHI(LL) = RS(I)
+                     IF (RSLO(LL).GT.0.0D0) THEN
+                        RS(I) = SQRT(RSLO(LL)*RSHI(LL))
+                     ELSE IF(NB_FLAG.EQ.1) THEN
                         IF(-NNB.GT.NNBOPT) THEN
                           RS(I)=(-FLOAT(NNBOPT)/FLOAT(NNB))**0.333*RS(I)
                         ELSE
@@ -160,7 +169,12 @@
 *41                  FORMAT (' ZERO NB! rank I NAME NB RS ri ',
 *    &                    I4,2I11,I7,1P,2E13.5)
 *                    CALL FLUSH(41)
-                     RS(I) = 1.5*RS(I)
+                     RSLO(LL) = RS(I)
+                     IF (RSHI(LL).GT.0.0D0) THEN
+                        RS(I) = SQRT(RSLO(LL)*RSHI(LL))
+                     ELSE
+                        RS(I) = 1.5*RS(I)
+                     END IF
                      NOFL3 = NOFL3 + 1
                   END IF
                   IF(M_FLAG.EQ.1) THEN
@@ -177,6 +191,12 @@
 *       Repeat the last block for rare exceptions (NNB < 0 and = 1).
           IF (NOFL2.GT.0) THEN
              NOFL2 = 0
+             NREP = NREP + 1
+             IF (NREP.GT.200) THEN
+                WRITE (6,*) ' FPOLY0: no neighbour radius with 2 to ',
+     &               NNBMAX,' members after 200 trials; stop'
+                STOP
+             END IF
              GO TO 31
           END IF
 *
