@@ -39,8 +39,8 @@
 #endif
 *
 *       Include KS pairs, triple, quad, mergers, collisions & chain.
-      ETOT = ZKIN - POT + ETIDE + EBIN + ESUB + EMERGE + ECOLL + EMDOT
-     &                                                         + ECDOT
+      ETOT = ZKIN - POT + ETIDE + EPL + EBIN + ESUB + EMERGE + ECOLL
+     &                                                 + EMDOT + ECDOT
       IF (NCH.GT.0) THEN
           ETOT = ETOT + ECH
       END IF
