@@ -232,6 +232,12 @@ C      TIME = MIN(TBLOCK,TIME)
      &                  L=1,NCH)
    48     FORMAT (' CHDIAG TERM: T NCH ECH EINT DE VCM NAME,V ',
      &            F12.4,I3,1P,4E12.4,6(I8,E10.2))
+          WRITE (6,49)  ICM, NAME(ICM), BODY(ICM), T0(ICM), STEP(ICM),
+     &                  TIME, TPREV, TIMEC, (CM(K),K=1,6),
+     &                  (X0DOT(K,ICM),K=1,3)
+   49     FORMAT (' CHDIAG CM: ICM NAME BODY T0 STEP TIME TPREV TIMEC',
+     &            ' CM(1-6) X0DOT ',2I8,1P,E11.3,0P,2F13.6,F12.5,2F13.6,
+     &            1P,9E12.4)
           call flush(6)
       END IF
 *

@@ -182,13 +182,23 @@ the same source as `v2026.07.6`).
   untested by `MBHCHECK`, and the pericentre passage under a perturbation of order unity left an energy error.
   `MBHTIDE(IPAIR)`, the tide at the pair's apocentre for its current distance, terminates the pair as soon as it
   exceeds GMAX [v2026.07.19].
-- `chain.f`, `chterm.f`: a chain membership lives at most `CHLIFE = 200` crossing times of its own mass and energy.
-  A chain holding an IMBH binary and the cusp stars bound to it never resolved (no escapes; `CHSTAB`/`CSTAB4` cover
-  N ≤ 4, `CSTAB5` needs distance ratios outside 1/4–4, N > 5 continues), ran for ~10⁵ crossing times and
-  degenerated, after which `INTGRT` re-entered it with a zero interval (stall) or an enforced termination mapped the
-  broken state back (energy halt). Diagnostics under KZ(30) ≥ 2: the integrated chain energy against the energy of
-  the coordinates at every return, the chain energy against the restored members' internal energy at every
-  termination; an enforced termination prints its members and energies regardless [v2026.07.19].
+- `chain.f`, `chterm.f`: a chain membership lives at most `CHLIFE = 200` crossing times, the unit being the longer
+  of the crossing time from its mass and energy and the free-fall time of its size (the former alone is a hard
+  binary's timescale and ended its encounter with an intruder after a few hundred steps). A chain holding an IMBH
+  binary and the cusp stars bound to it never resolved (no escapes; `CHSTAB`/`CSTAB4` cover N ≤ 4, `CSTAB5` needs
+  distance ratios outside 1/4–4, N > 5 continues) and degenerated, after which `INTGRT` re-entered it with a zero
+  interval (stall) or an enforced termination mapped the broken state back (energy halt). At every return the energy
+  of the coordinates is tested against the integrated energy (`CHETOL = 1e-2` relative; the slow-down bookkeeping
+  keeps healthy chains within 1e-3): on a violation the state of the last consistent return is restored and the chain
+  terminated from it, as it is at an enforced termination of a degenerate state. Diagnostics under KZ(30) ≥ 2: the
+  integrated chain energy against the energy of the coordinates at every return, the chain energy against the
+  restored members' internal energy and the c.m. body's state at every termination; an enforced termination prints
+  its members and energies regardless [v2026.07.19].
+- `nstab.f` (`NSTABX`), `assess.f`, `chstab.f`, `cstab2.f`, `higrow.f`, `hmdot.f`, `hmdot2.f`, `impact.f`, `reset2.f`:
+  `NSTAB` (Mardling 2008) is valid for m2/m1 > 0.05 or m3/m1 > 0.05, or both above 0.01; an IMBH binary with stellar
+  companions lies outside and was judged unstable at every call, so a hierarchy about the IMBH never reached the
+  merger path and stayed in the chain. Below the validity limit the Mardling & Aarseth (2001) criterion through
+  `STABILITY` decides; every caller goes through `NSTABX` [v2026.07.19].
 - From upstream `dev`, cherry-picked with their authorship: supernova ghosts removed from neighbour and
   perturber lists in `mdot.F`, ghost guards in `coal.f`, `chterm.f`, `expel.f`, `expel2.f`; `lagr.f`
   cumulative statistics and initialised radii under KZ(8) = 0; the Eggleton IMF exponent in `imf2.f`; HDF5
