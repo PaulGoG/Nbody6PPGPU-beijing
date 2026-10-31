@@ -194,6 +194,11 @@ the same source as `v2026.07.6`).
   integrated chain energy against the energy of the coordinates at every return, the chain energy against the
   restored members' internal energy and the c.m. body's state at every termination; an enforced termination prints
   its members and energies regardless [v2026.07.19].
+- `chterm.f`: the six member names were kept in `JLIST(6:11)` while the members' indices filled `JLIST(1:NCH)` in the
+  same loop, so with six members the sixth index overwrote the first name: the c.m. body (which carries that name)
+  was never found and the first member's index was stale — the members were placed about the origin at rest and the
+  first member's state written to another body at every six-body termination. The names live in their own array;
+  when no member-named body holds a mass the chain's own index is the c.m. body [v2026.07.19].
 - `nstab.f` (`NSTABX`), `assess.f`, `chstab.f`, `cstab2.f`, `higrow.f`, `hmdot.f`, `hmdot2.f`, `impact.f`, `reset2.f`:
   `NSTAB` (Mardling 2008) is valid for m2/m1 > 0.05 or m3/m1 > 0.05, or both above 0.01; an IMBH binary with stellar
   companions lies outside and was judged unstable at every call, so a hierarchy about the IMBH never reached the
