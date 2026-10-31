@@ -14,8 +14,9 @@
       REAL*8   RI(NMX),VI(NMX),RI2(NMX),VI2(NMX),SEMICH(NMX),ECCCH(NMX)
       REAL*8   RSEP(NMX),RSEP2(NMX),VSEP(NMX),VSEP2(NMX),RDOTV(NMX)
       REAL*8   TGRCH(NMX),A_EIN(NMX)
-      INTEGER  IJ(NMX),IOLD(NMX),IPRINT,NGOOD
-      REAL*8   YGOOD(NMX8),TGOOD
+      INTEGER  IJ(NMX),IOLD(NMX),IPRINT,NGOOD,INGOOD(NMX)
+      REAL*8   YGOOD(NMX8),TGOOD,KSGOOD(NMX),TKGOOD(0:NMX),EJGOOD
+      LOGICAL  KSLGOOD
       LOGICAL  CHECK,KSLOW,KCOLL,stopB,ICASE
       COMMON/SLOW1/   TK2(0:NMX),EJUMP,KSCH(NMX),KSLOW,KCOLL
       COMMON/SLOW2/   stepl,stopB
@@ -448,7 +449,21 @@
               DO 414 K = 1,NEQ
                   Y(K) = YGOOD(K)
   414         CONTINUE
+              DO 418 K = 1,N
+                  INAME(K) = INGOOD(K)
+                  KSCH(K) = KSGOOD(K)
+                  TK2(K) = TKGOOD(K)
+  418         CONTINUE
+              TK2(0) = TKGOOD(0)
+              EJUMP = EJGOOD
+              KSLOW = KSLGOOD
               CALL YSAVE(Y)
+              DO 419 K = 1,N-1
+                  KS1 = 4*(K - 1) + 1
+                  RK = Q(KS1)**2 + Q(KS1+1)**2 + Q(KS1+2)**2 +
+     &                 Q(KS1+3)**2
+                  RINV(K) = 1.0/RK
+  419         CONTINUE
               CALL TRANSX
               CHTIME = Y(NEQ)
               TIMEC = CHTIME
@@ -748,10 +763,28 @@
      &                ' ECONST NGOOD DTBACK NAMEC ',I9,I3,1P,3E12.4,I3,
      &                E10.2,0P,6I8)
               IF (NGOOD.GT.0) THEN
+*       The state vector belongs to the chain ordering and the slow-down
+*       state of its time: restore those with it (SWITCH and SLOW may
+*       have changed them since), then the inverse distances TRANSX
+*       does not form.
                   DO 411 K = 1,NEQ
                       Y(K) = YGOOD(K)
   411             CONTINUE
+                  DO 415 K = 1,N
+                      INAME(K) = INGOOD(K)
+                      KSCH(K) = KSGOOD(K)
+                      TK2(K) = TKGOOD(K)
+  415             CONTINUE
+                  TK2(0) = TKGOOD(0)
+                  EJUMP = EJGOOD
+                  KSLOW = KSLGOOD
                   CALL YSAVE(Y)
+                  DO 416 K = 1,N-1
+                      KS1 = 4*(K - 1) + 1
+                      RK = Q(KS1)**2 + Q(KS1+1)**2 + Q(KS1+2)**2 +
+     &                     Q(KS1+3)**2
+                      RINV(K) = 1.0/RK
+  416             CONTINUE
                   CALL TRANSX
                   CHTIME = Y(NEQ)
                   TIMEC = CHTIME
@@ -762,6 +795,14 @@
               DO 412 K = 1,NEQ
                   YGOOD(K) = Y(K)
   412         CONTINUE
+              DO 417 K = 1,N
+                  INGOOD(K) = INAME(K)
+                  KSGOOD(K) = KSCH(K)
+                  TKGOOD(K) = TK2(K)
+  417         CONTINUE
+              TKGOOD(0) = TK2(0)
+              EJGOOD = EJUMP
+              KSLGOOD = KSLOW
               NGOOD = 1
               TGOOD = CHTIME
           END IF
