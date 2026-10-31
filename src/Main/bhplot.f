@@ -138,12 +138,13 @@ c$$$            IF(XDOT(1,IBL)*VSTAR.GT.100) call abort()
             WHICH = 'BINARY'
             IBC = IBH + 1
             IF(MOD(IBH,2).EQ.0) IBC = IBH - 1
+            RIJ = 0.D0
             DO K = 1, 3
                RREL(K) = X(K,IBC) - X(K,IBH)
                VREL(K) = XDOT(K,IBC) - XDOT(K,IBH)
                RAVE(K) = BODY(IBC)*RREL(K)
                VAVE(K) = BODY(IBC)*VREL(K)
-               RIJ = RREL(K)*RREL(K)
+               RIJ = RIJ + RREL(K)*RREL(K)
             END DO
             RIJ = SQRT(RIJ)
             RIJMAX = RIJ
@@ -167,7 +168,7 @@ c$$$            IF(XDOT(1,IBL)*VSTAR.GT.100) call abort()
                VREL(KJ) = XDOT(KJ,I) - XDOT(KJ,IBH)
                RAVE(KJ) = RAVE(KJ) + BODY(I)*RREL(KJ)
                VAVE(KJ) = VAVE(KJ) + BODY(I)*VREL(KJ)
-               RIJ = RREL(KJ)*RREL(KJ)
+               RIJ = RIJ + RREL(KJ)*RREL(KJ)
             END DO
             RIJ = SQRT(RIJ)
             RIJMAX = MAX(RIJMAX,RIJ)
@@ -192,7 +193,7 @@ c$$$            IF(XDOT(1,IBL)*VSTAR.GT.100) call abort()
             IF(MOD(IBH,2).EQ.0) IBC = IBH - 1
             DO K = 1, 3
                VREL(K) = XDOT(K,IBC) - XDOT(K,IBH) - VAVE(K)
-               VSIGMA(K) = BODY(I)*VREL(K)*VREL(K)
+               VSIGMA(K) = BODY(IBC)*VREL(K)*VREL(K)
             END DO
          END IF
          
