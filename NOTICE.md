@@ -173,6 +173,22 @@ the same source as `v2026.07.6`).
   black-hole growth updates `FIDOT`; `FPOLY2` adds the black hole's second and third force derivatives; a KS pair
   within the black hole's tidal range keeps a nominal perturber (so `KSPERT` applies the tide) and `UNPERT` ends an
   unperturbed interval before the pair enters that range [v2026.07.18].
+- `bhplot.f`: the velocity dispersion of a black hole that is a KS component used `BODY(I)` with `I` the index of
+  the preceding neighbour loop, undefined with an empty neighbour list (SIGSEGV of a long IMBH run); `BODY(IBC)` now,
+  and the separations of the companion and the neighbours are summed instead of the square of the last coordinate
+  difference [v2026.07.19].
+- `mbh.F`, `ksint.f`: a KS pair diving through the black hole's tidal range within one period was never terminated,
+  since `KSINT` tests GAMMA > GMAX at apocentre passages only; its members crossed the tidal radius regularised and
+  untested by `MBHCHECK`, and the pericentre passage under a perturbation of order unity left an energy error.
+  `MBHTIDE(IPAIR)`, the tide at the pair's apocentre for its current distance, terminates the pair as soon as it
+  exceeds GMAX [v2026.07.19].
+- `chain.f`, `chterm.f`: a chain membership lives at most `CHLIFE = 200` crossing times of its own mass and energy.
+  A chain holding an IMBH binary and the cusp stars bound to it never resolved (no escapes; `CHSTAB`/`CSTAB4` cover
+  N ≤ 4, `CSTAB5` needs distance ratios outside 1/4–4, N > 5 continues), ran for ~10⁵ crossing times and
+  degenerated, after which `INTGRT` re-entered it with a zero interval (stall) or an enforced termination mapped the
+  broken state back (energy halt). Diagnostics under KZ(30) ≥ 2: the integrated chain energy against the energy of
+  the coordinates at every return, the chain energy against the restored members' internal energy at every
+  termination; an enforced termination prints its members and energies regardless [v2026.07.19].
 - From upstream `dev`, cherry-picked with their authorship: supernova ghosts removed from neighbour and
   perturber lists in `mdot.F`, ghost guards in `coal.f`, `chterm.f`, `expel.f`, `expel2.f`; `lagr.f`
   cumulative statistics and initialised radii under KZ(8) = 0; the Eggleton IMF exponent in `imf2.f`; HDF5
