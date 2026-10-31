@@ -8,7 +8,7 @@
       PARAMETER  (NMX=10,NMX2=2*NMX,NMX3=3*NMX,NMX4=4*NMX,
      &            NMX8=8*NMX,NMXm=NMX*(NMX-1)/2)
       REAL*8  M,MASS,MC,MIJ,MKK,R2(NMX,NMX),ANG(3)
-      INTEGER  IJ(NMX)
+      INTEGER  IJ(NMX),NAMEJ(6)
       COMMON/CHAIN1/  XCH(NMX3),VCH(NMX3),M(NMX),
      &                ZZ(NMX3),WC(NMX3),MC(NMX),
      &                XI(NMX3),PI(NMX3),MASS,RINV(NMXm),RSUM,MKK(NMX),
@@ -86,12 +86,17 @@
           call flush(6)
       END IF
 *
-      JLIST(6) = NAMEC(I1)
-      JLIST(7) = NAMEC(I2)
-      JLIST(8) = NAMEC(I3)
-      JLIST(9) = NAMEC(I4)
-      JLIST(10) = NAMEC(I5)
-      IF (NCH.EQ.6) JLIST(11) = NAMEC(I6)
+*       Member names in their own array: with six members the index of
+*       the sixth, written to JLIST(6) below, overwrote the first name in
+*       JLIST(6), after which the c.m. body was not found and the first
+*       member's index was stale (members placed about the origin at rest).
+      NAMEJ(1) = NAMEC(I1)
+      NAMEJ(2) = NAMEC(I2)
+      NAMEJ(3) = NAMEC(I3)
+      NAMEJ(4) = NAMEC(I4)
+      NAMEJ(5) = NAMEC(I5)
+      NAMEJ(6) = 0
+      IF (NCH.EQ.6) NAMEJ(6) = NAMEC(I6)
 *
 *       Specify chain phase indicator and restore original name to c.m. body.
       IPHASE = 8
@@ -101,12 +106,23 @@
       ICM = 0
       DO 10 J = IFIRST,NTOT
           DO 5 L = 1,NCH
-              IF (NAME(J).EQ.JLIST(L+5)) THEN
+              IF (NAME(J).EQ.NAMEJ(L)) THEN
                   JLIST(L) = J
                   IF (BODY(J).GT.0.0D0) ICM = J
               END IF
     5     CONTINUE
    10 CONTINUE
+*       The c.m. body carries the chain's mass under the name NAME0; when
+*       no member-named body holds a mass (seen at a termination from a
+*       restored state), the chain's own index ICH is the c.m. body, and
+*       the members must not be placed relative to the origin at rest.
+      IF (ICM.EQ.0) THEN
+          if(rank.eq.0) WRITE (6,11) ICH, NAME(ICH), BODY(ICH), NAME0,
+     &                               IFIRST, NTOT, (NAMEJ(L),L=1,NCH)
+   11     FORMAT (' CHTERM: NO C.M. BY NAME, ICH NAME BODY NAME0',
+     &            ' IFIRST NTOT NAMEC ',2I8,1P,E11.3,0P,3I8,6I8)
+          ICM = ICH
+      END IF
 *
 *       Modify identification list for special cases NCH = 2 & NCH = 3.
       IF (NCH.EQ.2) THEN
