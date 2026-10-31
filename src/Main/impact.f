@@ -469,9 +469,11 @@ c$$$      call mpi_barrier(MPI_COMM_WORLD,ierr)
           ELSE
               KS2 = JPAIR
           END IF
-          IF (KZ(27).LE.0.AND.JPAIR.GT.IPAIR) THEN
-              IF (JCLOSE.GT.0) JCLOSE = JCLOSE - 1
-          END IF
+*       The c.m. index of the inert second binary (JCLOSE > N, set above)
+*       was already reduced by one for JPAIR > IPAIR; a second reduction
+*       here for KZ(27) <= 0 made it N + JPAIR - 2, which is N for two
+*       pairs, and SETSYS then took the triple branch with body N as the
+*       third member and left the components of the first pair orphaned.
 *       Terminate smallest pair first and reduce second index if higher.
 *         CALL KSTERM
 C          IF (KS2.GT.KSPAIR) KS2 = KS2 - 1
