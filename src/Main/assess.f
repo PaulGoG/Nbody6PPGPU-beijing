@@ -51,7 +51,7 @@
               EOUT = ECC - DE
               PMIN = SEMI*(1.0 - EOUT)
           END IF
-          NST = NSTAB(SEMI0,SEMI,ECC0,EOUT,ANGLE,CM(1,IM),
+          NST = NSTABX(SEMI0,SEMI,ECC0,EOUT,ANGLE,CM(1,IM),
      &                                    CM(2,IM),BODY(I2))
           IF (NST.EQ.0) THEN
               PCRIT = 0.98*PMIN

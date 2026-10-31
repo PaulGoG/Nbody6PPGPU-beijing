@@ -819,7 +819,7 @@ c$$$              IF (NMTRY.GE.1000) DE = MIN(1.0D0 - EOUT,0.02D0)
               EOUT = EOUT - DE
               PMIN = SEMI1*(1.0 - EOUT)
           END IF
-          NST = NSTAB(SEMI,SEMI1,ECC,EOUT,ANGLE,BODY(I1),BODY(I2),BJ)
+          NST = NSTABX(SEMI,SEMI1,ECC,EOUT,ANGLE,BODY(I1),BODY(I2),BJ)
 *     --10/08/14 21:40-lwang-debug--------------------------------------*
 ***** Note:------------------------------------------------------------**
 C          print*,'NST SEMI',SEMI,'SEMI1',SEMI1,'ECC',ECC,'EOUT',EOUT,

@@ -302,3 +302,39 @@ c     -----------------------------------------
       facfac=prod
 
       end
+
+      INTEGER FUNCTION NSTABX(SEMI,SEMI1,ECC,ECC1,ALPHA,M1,M2,M3)
+*
+*
+*       Three-body stability with the mass-ratio validity of NSTAB.
+*       -----------------------------------------------------------
+*
+*       NSTAB (Mardling 2008) is valid for m2/m1 > 0.05 or m3/m1 > 0.05,
+*       or both above 0.01, with m1 the heavier inner body; outside that
+*       range (an IMBH binary with stellar companions, m/M = 0.008 in the
+*       I3 runs) its answer is unstable at every call, so a hierarchy
+*       about the IMBH never left the chain. Below the validity limit the
+*       semi-analytical criterion of Mardling & Aarseth (2001), STABILITY,
+*       compares the pericentre of the outer orbit with its critical value.
+*
+      IMPLICIT REAL*8 (A-H,M,O-Z)
+      REAL*8  M1,M2,M3,MA,MB,STABILITY
+      INTEGER NSTAB
+*
+      MA = MAX(M1,M2)
+      MB = MIN(M1,M2)
+      Q2 = MB/MA
+      Q3 = M3/MA
+      IF (Q2.GT.0.05D0.OR.Q3.GT.0.05D0.OR.
+     &    (Q2.GT.0.01D0.AND.Q3.GT.0.01D0)) THEN
+          NSTABX = NSTAB(SEMI,SEMI1,ECC,ECC1,ALPHA,M1,M2,M3)
+      ELSE
+          PMIN = SEMI1*(1.0D0 - ECC1)
+          PCRIT = STABILITY(M1,M2,M3,ECC,ECC1,ALPHA)*SEMI
+          NSTABX = 1
+          IF (PMIN.GT.PCRIT) NSTABX = 0
+      END IF
+*
+      RETURN
+*
+      END

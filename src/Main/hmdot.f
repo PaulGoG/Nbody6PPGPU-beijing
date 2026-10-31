@@ -87,7 +87,7 @@
               EOUT = EOUT - DE
               PMIN = SEMI1*(1.0 - EOUT)
           END IF
-          NST = NSTAB(SEMI2,SEMI1,ECC,EOUT,ZI,CM(1,IMERGE),
+          NST = NSTABX(SEMI2,SEMI1,ECC,EOUT,ZI,CM(1,IMERGE),
      &                                     CM(2,IMERGE),BODY(2*IPAIR))
           IF (NST.EQ.0) THEN
               PCRIT = 0.99*PMIN

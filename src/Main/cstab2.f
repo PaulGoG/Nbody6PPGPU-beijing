@@ -98,7 +98,7 @@
 *
 *       Evaluate the general stability function.
       IF (ECC1.LT.1.0) THEN
-          NST = NSTAB(SEMI,SEMI1,ECC,ECC1,ALPHA,MB,M(I3),M(I4))
+          NST = NSTABX(SEMI,SEMI1,ECC,ECC1,ALPHA,MB,M(I3),M(I4))
           IF (NST.EQ.0) THEN
               PCRIT = 0.99*PMIN
           ELSE

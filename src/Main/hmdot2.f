@@ -83,7 +83,7 @@
 *
 *       Obtain stability parameters for the new configuration.
       IF (ECC1.LT.1.0) THEN
-          NST = NSTAB(SEMI2,SEMI1,ECC,ECC1,ZI,CM(1,IMERGE),
+          NST = NSTABX(SEMI2,SEMI1,ECC,ECC1,ZI,CM(1,IMERGE),
      &                                     CM(2,IMERGE),BODY(2*IPAIR))
           IF (NST.EQ.0) THEN
               PCRIT = 0.99*PMIN

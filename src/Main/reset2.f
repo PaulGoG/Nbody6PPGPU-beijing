@@ -278,7 +278,7 @@
 *
 *       Evaluate the general stability function.
       IF (ECC1.LT.1.0) THEN
-          NST = NSTAB(SEMI0,SEMI,ECC,ECC1,ANGLE,CM(1,IMERGE),
+          NST = NSTABX(SEMI0,SEMI,ECC,ECC1,ANGLE,CM(1,IMERGE),
      &                                    CM(2,IMERGE),BODY(JCOMP))
           IF (NST.EQ.0) THEN
               PCRIT = 0.98*SEMI*(1.0 - ECC1)

@@ -346,7 +346,7 @@
           NAMEI = NAME(I)
           DEDT = 0.0
           DTPREV = 1.0
-          NST = NSTAB(SEMI,SEMI1,ECC,ECC1,ZI,BODYI(1),BODYI(2),ZM3)
+          NST = NSTABX(SEMI,SEMI1,ECC,ECC1,ZI,BODYI(1),BODYI(2),ZM3)
           IF (NST.EQ.0) THEN
               PCRIT = 0.98*QPERI*(1.0 - PERT)
               PCR = stability(BODYI(1),BODYI(2),ZM3,ECC,ECC1,ZI)
