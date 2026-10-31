@@ -608,3 +608,32 @@
       RETURN
 *
       END
+
+      REAL*8 FUNCTION MBHTIDE(IPAIR)
+*
+*
+*       Tidal perturbation of the black hole at the pair's apocentre.
+*       --------------------------------------------------------------
+*
+*       2 CMBH a^3 (1 + e)^3 / (m r^3) for the bound KS pair IPAIR at its
+*       c.m. distance r (0 for an unbound or merged pair): the value GAMMA
+*       reaches at the next apocentre. KSINT terminates the pair when it
+*       exceeds GMAX, so that a pair diving through the tidal radius within
+*       one period is resolved before the pericentre test of MBHCHECK.
+*
+      INCLUDE 'common6.h'
+      INCLUDE 'mbh.h'
+*
+      MBHTIDE = 0.0D0
+      I = N + IPAIR
+      IF (BODY(I).LE.0.0D0.OR.H(IPAIR).GE.0.0D0) RETURN
+      SEMI = -0.5D0*BODY(I)/H(IPAIR)
+      ECC2 = (1.0D0 - R(IPAIR)/SEMI)**2 +
+     &       TDOT2(IPAIR)**2/(BODY(I)*SEMI)
+      RAP = SEMI*(1.0D0 + SQRT(MAX(ECC2,0.0D0)))
+      RI2 = X(1,I)**2 + X(2,I)**2 + X(3,I)**2 + EPSBH**2
+      MBHTIDE = 2.0D0*CMBH*RAP**3/(BODY(I)*RI2*SQRT(RI2))
+*
+      RETURN
+*
+      END

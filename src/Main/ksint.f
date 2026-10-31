@@ -23,6 +23,7 @@
       REAL*8  UI(4),UIDOT(4),XI(6),VI(6),FP(6),FD(6),A_EIN,CL2
       INTEGER RES
       LOGICAL IQ,LBRAKE
+      REAL*8  MBHTIDE
 *
 *       Set second component, pair index & c.m. index.
       I2 = I1 + 1
@@ -152,6 +153,14 @@
                   IQ = .TRUE.
               END IF
           END IF
+      END IF
+*
+*       Static black hole (KZ(44)): terminate a bound pair whose apocentre
+*       tide exceeds GMAX at once rather than at the next apocentre check:
+*       a pair sweeping through the tidal radius within one period would
+*       pass the pericentre regularised, its members untested by MBHCHECK.
+      IF (KZ(44).GT.0.AND.HI.LT.0.0D0.AND.NAME(I).GT.0) THEN
+          IF (MBHTIDE(IPAIR).GT.GMAX) IQ = .TRUE.
       END IF
 *
 *       Choose basic regularized step using binding energy or lower limit.
