@@ -204,6 +204,15 @@ the same source as `v2026.07.6`).
   companions lies outside and was judged unstable at every call, so a hierarchy about the IMBH never reached the
   merger path and stayed in the chain. Below the validity limit the Mardling & Aarseth (2001) criterion through
   `STABILITY` decides; every caller goes through `NSTABX` [v2026.07.19].
+- `chain.f`: the consistency guard saves and restores the chain ordering (`INAME`) and the slow-down state (`KSCH`,
+  `TK2`, `EJUMP`, `KSLOW`) with the state vector, since `SWITCH` and `SLOW` may have changed them after the save;
+  a restore of the vector alone was as inconsistent as the degenerate state it replaced [v2026.07.20].
+- `delay.f`: a deferred chain request is verified by the names of its pair's components and of its intruder and by
+  the pair count before it is carried out, and abandoned with a diagnostic line when the pairs were renumbered in
+  between; `IMPACT` raises it again [v2026.07.20].
+- `impact.f`: for a binary–binary chain with an inert second pair under KZ(27) ≤ 0, the second pair's c.m. index was
+  reduced twice and equalled N for two pairs; `SETSYS` then chained body N with the second pair's components under the
+  c.m. of the first pair and the run halted with an unbounded velocity [v2026.07.20].
 - From upstream `dev`, cherry-picked with their authorship: supernova ghosts removed from neighbour and
   perturber lists in `mdot.F`, ghost guards in `coal.f`, `chterm.f`, `expel.f`, `expel2.f`; `lagr.f`
   cumulative statistics and initialised radii under KZ(8) = 0; the Eggleton IMF exponent in `imf2.f`; HDF5
