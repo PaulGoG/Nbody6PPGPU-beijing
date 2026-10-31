@@ -223,9 +223,13 @@
 *       the stability tests do not cover N > 5 or intermediate distance
 *       ratios, and after ~10^5 TCR of chain time the regularized state
 *       degenerates; CHTERM hands the system back to KS and the N-body
-*       integration, from which IMPACT may start a new chain.
+*       integration, from which IMPACT may start a new chain. The unit
+*       is the longer of TCR (set by a hard binary's energy, too short
+*       for its encounter with an intruder) and the free-fall time of
+*       the chain's size.
       TCH0 = CHTIME
-      TCHLIM = CHTIME + CHLIFE*TCR
+      TCRX = MAX(TCR,SQRT(RSUM**3/MASS))
+      TCHLIM = CHTIME + CHLIFE*TCRX
 *
 *       Determine the smallest two-body time-scale from parabolic orbit.
       CALL R2SORT(IJ,R2)
@@ -710,9 +714,9 @@
           TIMEC = CHTIME
 *       Terminate a chain that has outlived CHLIFE crossing times.
           IF (CHTIME.GT.TCHLIM) THEN
-              if(rank.eq.0) WRITE (6,409) NSTEP1, N, CHTIME - TCH0, TCR,
-     &                                    (NAMEC(K),K=1,N)
-  409         FORMAT (' CHAIN LIFETIME CHTERM: NSTEP N DT TCR NAMEC ',
+              if(rank.eq.0) WRITE (6,409) NSTEP1, N, CHTIME - TCH0,
+     &                                    TCRX, (NAMEC(K),K=1,N)
+  409         FORMAT (' CHAIN LIFETIME CHTERM: NSTEP N DT TCRX NAMEC ',
      &                I9,I3,1P,2E10.2,0P,6I8)
               GO TO 70
           END IF
