@@ -14,7 +14,8 @@
       REAL*8   RI(NMX),VI(NMX),RI2(NMX),VI2(NMX),SEMICH(NMX),ECCCH(NMX)
       REAL*8   RSEP(NMX),RSEP2(NMX),VSEP(NMX),VSEP2(NMX),RDOTV(NMX)
       REAL*8   TGRCH(NMX),A_EIN(NMX)
-      INTEGER  IJ(NMX),IOLD(NMX),IPRINT
+      INTEGER  IJ(NMX),IOLD(NMX),IPRINT,NGOOD
+      REAL*8   YGOOD(NMX8),TGOOD
       LOGICAL  CHECK,KSLOW,KCOLL,stopB,ICASE
       COMMON/SLOW1/   TK2(0:NMX),EJUMP,KSCH(NMX),KSLOW,KCOLL
       COMMON/SLOW2/   stepl,stopB
@@ -37,8 +38,10 @@
       DIMENSION XCH(3,NMX),VCH(3,NMX)
       EQUIVALENCE (XCH(1,1),X(1)),(VCH(1,1),V(1))
       DATA IPRINT/0/
-*       Chain lifetime limit in crossing times (see TCHLIM).
-      PARAMETER (CHLIFE = 200.0D0)
+*       Chain lifetime limit in crossing times (see TCHLIM) and the
+*       tolerance of the energy of the coordinates against the integrated
+*       energy (slow-down bookkeeping keeps healthy chains within 1e-3).
+      PARAMETER (CHLIFE = 200.0D0, CHETOL = 1.0D-02)
 *
       SAVE
 *
@@ -156,6 +159,7 @@
 *
 *       Initialize chain regularization (new case or modified chain).
    10 NEQ = 8*N
+      NGOOD = 0
       IF (KCASE.GT.0) THEN
           TMAX = TIMEC + STEPS(ISUB)
           CHTIME = TIMEC
@@ -433,6 +437,23 @@
   407         FORMAT (' CHDIAG MEMBERS: NAME M R ',6(I8,1P,2E11.3))
               call flush(6)
           end if
+*       Restore the last consistent state if this one is degenerate.
+          CALL TRANSX
+          CALL CONST(X,V,M,N,ENERX,G0,ALAGX)
+          IF (ABS(ENERX - ENERGY).GT.CHETOL*ABS(ENERGY).AND.
+     &        NGOOD.GT.0) THEN
+              if(rank.eq.0) WRITE (6,413) CHTIME - TGOOD
+  413         FORMAT (' ENFORCED CHTERM FROM THE LAST CONSISTENT STATE',
+     &                ' DTBACK ',1P,E10.2)
+              DO 414 K = 1,NEQ
+                  Y(K) = YGOOD(K)
+  414         CONTINUE
+              CALL YSAVE(Y)
+              CALL TRANSX
+              CHTIME = Y(NEQ)
+              TIMEC = CHTIME
+              ECH = ENERGY
+          END IF
           go to 70
       ELSE IF (STEP.EQ.0.0D0) THEN
           if(rank.eq.0) WRITE (6,*) ' Stepsize = 0!', char(7)
@@ -712,6 +733,38 @@
           CALL TRANSX
           ECH = ENERGY
           TIMEC = CHTIME
+*       Consistency of the regularized state: the energy of the
+*       coordinates against the integrated energy. A degenerate state
+*       (members flying apart after a few thousand steps of a chain
+*       holding an IMBH binary and bound cusp stars) differs by order
+*       unity between two returns; the last consistent state is then
+*       restored and the chain terminated from it, at the cost of one
+*       return interval of its members' motion.
+          CALL CONST(X,V,M,N,ENERX,G0,ALAGX)
+          IF (ABS(ENERX - ENERGY).GT.CHETOL*ABS(ENERGY)) THEN
+              if(rank.eq.0) WRITE (6,410) NSTEP1, N, CHTIME - TCH0,
+     &            ENERGY, ENERX, NGOOD, CHTIME - TGOOD, (NAMEC(K),K=1,N)
+  410         FORMAT (' CHAIN INCONSISTENT CHTERM: NSTEP N DT ENERGY',
+     &                ' ECONST NGOOD DTBACK NAMEC ',I9,I3,1P,3E12.4,I3,
+     &                E10.2,0P,6I8)
+              IF (NGOOD.GT.0) THEN
+                  DO 411 K = 1,NEQ
+                      Y(K) = YGOOD(K)
+  411             CONTINUE
+                  CALL YSAVE(Y)
+                  CALL TRANSX
+                  CHTIME = Y(NEQ)
+                  TIMEC = CHTIME
+                  ECH = ENERGY
+              END IF
+              GO TO 70
+          ELSE
+              DO 412 K = 1,NEQ
+                  YGOOD(K) = Y(K)
+  412         CONTINUE
+              NGOOD = 1
+              TGOOD = CHTIME
+          END IF
 *       Terminate a chain that has outlived CHLIFE crossing times.
           IF (CHTIME.GT.TCHLIM) THEN
               if(rank.eq.0) WRITE (6,409) NSTEP1, N, CHTIME - TCH0,
@@ -722,7 +775,6 @@
           END IF
 *       CHDIAG: integrated energy against the energy of the coordinates.
           if(rank.eq.0.and.KZ30.GE.2) then
-              CALL CONST(X,V,M,N,ENERX,G0,ALAGX)
               WRITE (6,406) NSTEP1, T0S(ISUB)+TIMEC, N, ENERGY, ENERX,
      &                      ENERGY - ENERX, RSUM, RGRAV, GPERT, STEP
   406         FORMAT (' CHDIAG RET: NSTEP T N ENERGY ECONST DE RSUM',
