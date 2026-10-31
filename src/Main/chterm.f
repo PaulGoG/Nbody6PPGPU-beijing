@@ -210,6 +210,31 @@ C      TIME = MIN(TBLOCK,TIME)
           END IF
    40 CONTINUE
 *
+*       Energy of the restored members against the chain energy (CHDIAG).
+      EKX = 0.0D0
+      EPX = 0.0D0
+      DO 46 L = 1,NCH
+          J = JLIST(L)
+          EKX = EKX + 0.5D0*BODY(J)*((XDOT(1,J) - CM(4))**2 +
+     &          (XDOT(2,J) - CM(5))**2 + (XDOT(3,J) - CM(6))**2)
+          DO 47 LL = L+1,NCH
+              JJ = JLIST(LL)
+              RIJX = SQRT((X(1,J) - X(1,JJ))**2 +
+     &               (X(2,J) - X(2,JJ))**2 + (X(3,J) - X(3,JJ))**2)
+              EPX = EPX + BODY(J)*BODY(JJ)/RIJX
+   47     CONTINUE
+   46 CONTINUE
+      IF (rank.eq.0.and.KZ(30).GE.2) THEN
+          WRITE (6,48)  TIME+TOFF, NCH, ECH, EKX - EPX, EKX - EPX - ECH,
+     &                  SQRT(CM(4)**2 + CM(5)**2 + CM(6)**2),
+     &                  (NAME(JLIST(L)),SQRT(XDOT(1,JLIST(L))**2 +
+     &                  XDOT(2,JLIST(L))**2 + XDOT(3,JLIST(L))**2),
+     &                  L=1,NCH)
+   48     FORMAT (' CHDIAG TERM: T NCH ECH EINT DE VCM NAME,V ',
+     &            F12.4,I3,1P,4E12.4,6(I8,E10.2))
+          call flush(6)
+      END IF
+*
 *       Print diagnostics for high-velocity chain escaper after COLL or COAL.
       IF (rank.eq.0.and.ECH.GT.0.5*BODYM*16.0*ECLOSE) THEN
           WRITE (6,41)  NAME(JX), NCH, ECH, SQRT(VX2)*VSTAR

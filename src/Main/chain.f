@@ -37,6 +37,8 @@
       DIMENSION XCH(3,NMX),VCH(3,NMX)
       EQUIVALENCE (XCH(1,1),X(1)),(VCH(1,1),V(1))
       DATA IPRINT/0/
+*       Chain lifetime limit in crossing times (see TCHLIM).
+      PARAMETER (CHLIFE = 200.0D0)
 *
       SAVE
 *
@@ -216,6 +218,14 @@
 *
 *       Set current crossing time and specify initial step using T' = 1/L.
       TCR = MASS**2.5/ABS(2.0D0*ENERGY)**1.5
+*       Lifetime limit of this membership: a bound hierarchy about a
+*       dominant mass (cusp stars about an IMBH binary) never escapes,
+*       the stability tests do not cover N > 5 or intermediate distance
+*       ratios, and after ~10^5 TCR of chain time the regularized state
+*       degenerates; CHTERM hands the system back to KS and the N-body
+*       integration, from which IMPACT may start a new chain.
+      TCH0 = CHTIME
+      TCHLIM = CHTIME + CHLIFE*TCR
 *
 *       Determine the smallest two-body time-scale from parabolic orbit.
       CALL R2SORT(IJ,R2)
@@ -407,6 +417,18 @@
       ELSE IF (STEP.LE.SMALL) THEN
           if(rank.eq.0) WRITE(6,*) ' Stepsize, Small =',
      &   STEP,SMALL,' ENFORCED CHTERM '
+          if(rank.eq.0) then
+              CALL TRANSX
+              CALL CONST(X,V,M,N,ENERX,G0,ALAGX)
+              WRITE (6,408) CHTIME, TMAX, GPERT, NPERT, ENERGY, ENERX,
+     &                      ECH, (KSCH(K),K=1,N-1)
+  408         FORMAT (' CHDIAG ENFORCED: CHT TMAX GPERT NP ENERGY',
+     &                ' ECONST ECH KSCH ',1P,3E12.4,I4,3E14.6,6E10.2)
+              WRITE (6,407) (NAMEC(K),M(K),1.0/RINV(K),K=1,N-1),
+     &                      NAMEC(N),M(N)
+  407         FORMAT (' CHDIAG MEMBERS: NAME M R ',6(I8,1P,2E11.3))
+              call flush(6)
+          end if
           go to 70
       ELSE IF (STEP.EQ.0.0D0) THEN
           if(rank.eq.0) WRITE (6,*) ' Stepsize = 0!', char(7)
@@ -686,6 +708,22 @@
           CALL TRANSX
           ECH = ENERGY
           TIMEC = CHTIME
+*       Terminate a chain that has outlived CHLIFE crossing times.
+          IF (CHTIME.GT.TCHLIM) THEN
+              if(rank.eq.0) WRITE (6,409) NSTEP1, N, CHTIME - TCH0, TCR,
+     &                                    (NAMEC(K),K=1,N)
+  409         FORMAT (' CHAIN LIFETIME CHTERM: NSTEP N DT TCR NAMEC ',
+     &                I9,I3,1P,2E10.2,0P,6I8)
+              GO TO 70
+          END IF
+*       CHDIAG: integrated energy against the energy of the coordinates.
+          if(rank.eq.0.and.KZ30.GE.2) then
+              CALL CONST(X,V,M,N,ENERX,G0,ALAGX)
+              WRITE (6,406) NSTEP1, T0S(ISUB)+TIMEC, N, ENERGY, ENERX,
+     &                      ENERGY - ENERX, RSUM, RGRAV, GPERT, STEP
+  406         FORMAT (' CHDIAG RET: NSTEP T N ENERGY ECONST DE RSUM',
+     &                ' RGRAV GPERT STEP ',I9,F12.6,I3,1P,3E14.6,4E10.2)
+          end if
 * Temporary Output RSP Sep 2018
           IF (rank.eq.0.and.KZ30.GE.2) THEN
 *         IF (rank.eq.0.and.KZ30.GT.2) THEN
