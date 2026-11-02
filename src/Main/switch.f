@@ -141,10 +141,39 @@
       do i=1,n-1
           ksch(i)=ksnew(i)
       end do
-*       Define auxiliary quantities.
+*       Define auxiliary quantities for the new ordering.
+      CALL CHMASS
+*
+*       Copy Y-array from COMMON.
+      CALL YCOPY(Y)
+*
+      RETURN
+      END
+*
+*
+      SUBROUTINE CHMASS
+*
+*
+*       Chain mass arrays for the current ordering.
+*       --------------------------------------------
+*
+      INCLUDE 'commonc.h'
+      INCLUDE 'common2.h'
+      LOGICAL  KSLOW,KCOLL
+      REAL*8  KSCH
+      COMMON/SLOW1/   TK2(0:NMX),EJUMP,KSCH(NMX),KSLOW,KCOLL
+*
+*
+*       Masses by chain position, total mass, kinetic and interaction
+*       coefficients and the slow-down corrections follow INAME and KSCH.
+*       SWITCH calls this after every change of the ordering; CHAIN calls
+*       it when the consistency guard restores a saved state with its own
+*       ordering, because TRANSX divides the chain momenta by MC: an
+*       ordering restored without these arrays hands one member's momentum
+*       to another member's mass (an IMBH restored into a star's position
+*       left the chain at 128 times its speed, EKIN +300 NB).
       MASS=0.0
       DO I=1,N
-      L=3*(I-1)
       MC(I)=M(INAME(I))
       MASS=MASS+MC(I)
       END DO
@@ -176,9 +205,6 @@
 *       Note: TK2(0) & TK2(N) should be zero but never used.
       TK2(0) = 0.0
       TK2(N) = 0.0
-*
-*       Copy Y-array from COMMON.
-      CALL YCOPY(Y)
 *
       RETURN
       END
