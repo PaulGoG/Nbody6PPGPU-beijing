@@ -41,8 +41,14 @@
       DATA IPRINT/0/
 *       Chain lifetime limit in crossing times (see TCHLIM) and the
 *       tolerance of the energy of the coordinates against the integrated
-*       energy (slow-down bookkeeping keeps healthy chains within 1e-3).
-      PARAMETER (CHLIFE = 200.0D0, CHETOL = 1.0D-02)
+*       energy, relative to the chain energy. Healthy chains return within
+*       1e-5 (mode 1e-7; 19 of 742 000 returns of an 8k IMBH run above
+*       1e-3, all weakly bound three-body chains with |E| < 0.05 NB); a
+*       breakdown grows geometrically from 1e-6 to 1e-1 within ten returns
+*       (a chain holding an IMBH binary of 3e-7 NB), and the restore books
+*       the inconsistency of the last accepted return, hence 1e-3 rather
+*       than 1e-2 (DE 3e-4 against 1e-2 at the termination of that chain).
+      PARAMETER (CHLIFE = 200.0D0, CHETOL = 1.0D-03)
 *
       SAVE
 *
@@ -457,6 +463,8 @@
               TK2(0) = TKGOOD(0)
               EJUMP = EJGOOD
               KSLOW = KSLGOOD
+*       Mass arrays of the restored ordering (TRANSX divides by MC).
+              CALL CHMASS
               CALL YSAVE(Y)
               DO 419 K = 1,N-1
                   KS1 = 4*(K - 1) + 1
@@ -765,8 +773,9 @@
               IF (NGOOD.GT.0) THEN
 *       The state vector belongs to the chain ordering and the slow-down
 *       state of its time: restore those with it (SWITCH and SLOW may
-*       have changed them since), then the inverse distances TRANSX
-*       does not form.
+*       have changed them since), the mass arrays that follow the
+*       ordering (TRANSX divides the chain momenta by MC), then the
+*       inverse distances TRANSX does not form.
                   DO 411 K = 1,NEQ
                       Y(K) = YGOOD(K)
   411             CONTINUE
@@ -778,6 +787,7 @@
                   TK2(0) = TKGOOD(0)
                   EJUMP = EJGOOD
                   KSLOW = KSLGOOD
+                  CALL CHMASS
                   CALL YSAVE(Y)
                   DO 416 K = 1,N-1
                       KS1 = 4*(K - 1) + 1
