@@ -376,6 +376,19 @@ C$$$      FD(3) = FD(3) + (DV(3) - A3*DRDP)*DR3I
       FDR(1) = FDR(1) - (DV(1) - A1*DRDP)*DR3I
       FDR(2) = FDR(2) - (DV(2) - A2*DRDP)*DR3I
       FDR(3) = FDR(3) - (DV(3) - A3*DRDP)*DR3I
+*       Apply the same correction to the copy taken before the external
+*       force (KZ(14) = 3, 5): the tidal work below is formed from
+*       FREG - FRX, and the force of a changed neighbour must not enter
+*       it (it did: a residual of the tidal energy of the order of the
+*       tidal work itself, with a systematic sign).
+      IF (KZ(14).EQ.3.OR.KZ(14).EQ.5.OR.KZ(14).EQ.9) THEN
+          FRX(1) = FRX(1) - A1*DR3I
+          FRX(2) = FRX(2) - A2*DR3I
+          FRX(3) = FRX(3) - A3*DR3I
+          FDX(1) = FDX(1) - (DV(1) - A1*DRDP)*DR3I
+          FDX(2) = FDX(2) - (DV(2) - A2*DRDP)*DR3I
+          FDX(3) = FDX(3) - (DV(3) - A3*DRDP)*DR3I
+      END IF
 *
 *       Remove body #J from JJLIST unless it is the last or only member.
       IF (K.GT.NBLOSS) GO TO 70
