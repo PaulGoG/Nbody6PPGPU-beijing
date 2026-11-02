@@ -229,6 +229,11 @@ the same source as `v2026.07.6`).
   accepts a merger up to an estimated 0.05 at apocentre, so a star bound inside the outer orbit of an IMBH
   triple ended the merger at every creation (378 cycles in 0.02 NB). A merged hierarchy keeps 0.25 in the
   generic branch [v2026.07.22].
+- `regcor_gpu.F`: under KZ(14) = 3 and 5 the tidal work per regular step is formed from the regular force after the
+  external force minus a copy taken before it; the lost-neighbour correction ran after that copy, so the force of
+  every changed neighbour entered the tidal energy (a systematic residual of the energy check of the order of the
+  tidal work itself, independent of the time steps; the tidal energy had the wrong sign on a Plummer sphere on
+  the solar circle). The copy receives the same correction; the forces are unchanged [v2026.07.23].
 - From upstream `dev`, cherry-picked with their authorship: supernova ghosts removed from neighbour and
   perturber lists in `mdot.F`, ghost guards in `coal.f`, `chterm.f`, `expel.f`, `expel2.f`; `lagr.f`
   cumulative statistics and initialised radii under KZ(8) = 0; the Eggleton IMF exponent in `imf2.f`; HDF5
