@@ -224,6 +224,11 @@ the same source as `v2026.07.6`).
   has its mode at 1e-7 and exceeds 1e-3 at 19 returns (weakly bound three-body chains, |E| < 0.05 NB; 1647 exceed
   1e-4), while the breakdown of a chain holding an IMBH binary of 3e-7 NB grew from 1e-6 to 1e-1 within ten returns;
   at 1e-3 the termination of that chain books DE 3e-4 against 1e-2 before [v2026.07.21].
+- `ksint.f`: the generic large-perturbation branch (γ > 0.1, lowered from 0.25 by upstream) ran before the
+  merger block, whose own apocentre criterion (GA > 0.25, R > a) never applied between 0.1 and 0.25; IMPACT
+  accepts a merger up to an estimated 0.05 at apocentre, so a star bound inside the outer orbit of an IMBH
+  triple ended the merger at every creation (378 cycles in 0.02 NB). A merged hierarchy keeps 0.25 in the
+  generic branch [v2026.07.22].
 - From upstream `dev`, cherry-picked with their authorship: supernova ghosts removed from neighbour and
   perturber lists in `mdot.F`, ghost guards in `coal.f`, `chterm.f`, `expel.f`, `expel2.f`; `lagr.f`
   cumulative statistics and initialised radii under KZ(8) = 0; the Eggleton IMF exponent in `imf2.f`; HDF5
