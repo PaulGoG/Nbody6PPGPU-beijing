@@ -213,6 +213,17 @@ the same source as `v2026.07.6`).
 - `impact.f`: for a binary–binary chain with an inert second pair under KZ(27) ≤ 0, the second pair's c.m. index was
   reduced twice and equalled N for two pairs; `SETSYS` then chained body N with the second pair's components under the
   c.m. of the first pair and the run halted with an unbounded velocity [v2026.07.20].
+- `switch.f` (`CHMASS`), `chain.f`: the position-indexed mass arrays of the chain (`MC`, `MASS`, `TK1`, `TKK`, `MKK`,
+  `MIJ`) were set only by `SWITCH`, so a guard restore into an earlier ordering left them stale and `TRANSX`, which
+  forms the velocities as momentum over `MC`, divided one member's momentum by another's mass: an IMBH restored into
+  a star's former position left the chain at 128 times its speed (EKIN +300 NB, energy halt of the second fb01
+  realisation of the I3 set at 3488.2 NB, on every restart from the 3485.0 dump). The mass block of `SWITCH` is the
+  routine `CHMASS`, called by `SWITCH` and by both restores [v2026.07.21].
+- `chain.f`: `CHETOL = 1e-3`. The restore books the inconsistency of the last accepted return, so the tolerance is
+  the energy error of a guard termination. Over 742 000 returns of a healthy 8k IMBH run the relative inconsistency
+  has its mode at 1e-7 and exceeds 1e-3 at 19 returns (weakly bound three-body chains, |E| < 0.05 NB; 1647 exceed
+  1e-4), while the breakdown of a chain holding an IMBH binary of 3e-7 NB grew from 1e-6 to 1e-1 within ten returns;
+  at 1e-3 the termination of that chain books DE 3e-4 against 1e-2 before [v2026.07.21].
 - From upstream `dev`, cherry-picked with their authorship: supernova ghosts removed from neighbour and
   perturber lists in `mdot.F`, ghost guards in `coal.f`, `chterm.f`, `expel.f`, `expel2.f`; `lagr.f`
   cumulative statistics and initialised radii under KZ(8) = 0; the Eggleton IMF exponent in `imf2.f`; HDF5
