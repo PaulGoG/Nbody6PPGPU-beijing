@@ -91,8 +91,16 @@
 *
 *       Initialize termination indicator and check for large perturbation.
       IQ = .FALSE.
-*     Reduce the criterion from 0.25 to 0.1 to reduce the energy error
-      IF (GI.GT.0.10) GO TO 2
+*     Reduce the criterion from 0.25 to 0.1 to reduce the energy error.
+*       A merged hierarchy keeps the original 0.25: IMPACT accepts a merger
+*       up to an estimated apocentre perturbation of 0.05, and the search for
+*       a dominant perturber below compares against the pair force at the
+*       current (apocentre) separation, so a bound star inside the outer
+*       orbit's scale ended the merger of an IMBH triple at every creation
+*       (378 creations and terminations in 0.02 NB). The merger block of
+*       this routine applies its own apocentre criterion (GA > 0.25).
+      IF (GI.GT.0.10.AND.NAME(I).GT.0) GO TO 2
+      IF (GI.GT.0.25) GO TO 2
       IF (GI.LT.0.03) THEN
           JCOMP = 0
           GO TO 20
