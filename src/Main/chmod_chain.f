@@ -10,6 +10,8 @@
       REAL*8  M,MASS,MC,MIJ,MKK,XCM(3),VCM(3),KSCH,Y(NMX8)
       INTEGER  ISORT(NMX)
       LOGICAL  KSLOW2,KCOLL
+      INCLUDE 'chinert.h'
+      LOGICAL  INERT,CHINERT
       COMMON/CHAIN1/  XCH(NMX3),VCH(NMX3),M(NMX),
      &                ZZ(NMX3),WC(NMX3),MC(NMX),
      &                XI(NMX3),PI(NMX3),MASS,RINV(NMXm),RSUM,MKK(NMX),
@@ -217,16 +219,20 @@ c$$$          END IF
               FAC = 1.0
           END IF
 *
-*       Treat extreme binary as inert on significant slow-down.
-          IF (JCLOSE.GT.N.AND.FAC.GT.10.0) THEN
+*       Treat extreme binary as inert on significant slow-down, and a
+*       chain-inert pair (a < CHINRT*RMIN) in every case.
+          INERT = .FALSE.
+          IF (JCLOSE.GT.N.AND.NDORM.LT.2) INERT = CHINERT(JCLOSE-N)
+          IF (JCLOSE.GT.N.AND.(FAC.GT.10.0.OR.INERT)) THEN
               SEMI = -0.5*BODY(JCLOSE)/H(JCLOSE-N)
               RM = 1.0
               DO 8 K = 1,NCH-1
                   RM = MIN(1.0/RINV(K),RM)
     8         CONTINUE
               SMALL = 0.01*(RSUM - RIJ)
-              IF (rank.eq.0.and.RM.LT.SMALL.AND.SEMI.LT.SMALL) THEN
-                  WRITE (6,9)  NAME(JCLOSE), GPERT, SEMI, RIJ,
+              IF (SEMI.LT.SMALL.AND.(RM.LT.SMALL.OR.INERT)) THEN
+                  if(rank.eq.0)
+     &            WRITE (6,9)  NAME(JCLOSE), GPERT, SEMI, RIJ,
      &                                       (1.0/RINV(K),K=1,NCH-1)
     9             FORMAT (' ABSORB INERT    NM G A RIJ R ',
      &                                      I6,F6.2,1P,6E10.2)

@@ -13,8 +13,16 @@
       IPAIR = I - N
       I1 = 2*IPAIR - 1
       I2 = I1 + 1
-      BODY(I1) = BODYC(9)
-      BODY(I2) = BODYC(10)
+*       Component masses from the dormant-pair registry (BODYC(9:10) hold
+*       the last registered pair only).
+      CALL CHDORMR(NAME(I),B1,B2,IFOUND)
+      IF (IFOUND.GT.0) THEN
+          BODY(I1) = B1
+          BODY(I2) = B2
+      ELSE
+          BODY(I1) = BODYC(9)
+          BODY(I2) = BODYC(10)
+      END IF
       T0(I1) = TIME
 *
 *       Specify semi-major axis and Kepler period.

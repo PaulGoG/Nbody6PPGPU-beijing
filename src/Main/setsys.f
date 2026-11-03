@@ -19,8 +19,11 @@
      &                NAMEM(MMAX),NAMEG(MMAX),KSTARM(MMAX),IFLAG(MMAX)
       SAVE JSAVE
       INTEGER JSAVE(3)
+      INCLUDE 'chinert.h'
+      LOGICAL INERT,CHINERT
 *
 *
+      INERT = .FALSE.
 *       Check whether new (or renewed) chain or addition of member(s).
       IF (NCH.GT.0) GO TO 10
 *
@@ -46,8 +49,10 @@
     5 CONTINUE
       CM(9) = EBCH0
 *
-*       Include treatment for near-synchronous binary as inert body (B-B).
-      IF (JCLOSE.GT.N.AND.KZ(26).LT.2) THEN
+*       Include treatment for near-synchronous binary as inert body (B-B),
+*       and of a chain-inert pair (a < CHINRT*RMIN) under any KZ(26).
+      IF (JCLOSE.GT.N.AND.NDORM.LT.2) INERT = CHINERT(JCLOSE-N)
+      IF (JCLOSE.GT.N.AND.(KZ(26).LT.2.OR.INERT)) THEN
           RSUM = RMIN
           NCH = 2
           GO TO 10
@@ -110,8 +115,10 @@
           M(NCH) = BODY(JCLOSE)
       ELSE
           KSPAIR = JCLOSE - N
-*       Check for synchronous tidal binary (save dormant energy in ECOLL).
-          IF (KZ(27).GT.0.AND.KZ(26).LT.2) THEN
+*       Check for synchronous tidal binary (save dormant energy in ECOLL)
+*       or a chain-inert pair (registry of at most two dormant pairs).
+          IF (NDORM.LT.2) INERT = CHINERT(KSPAIR)
+          IF ((KZ(27).GT.0.AND.KZ(26).LT.2).OR.INERT) THEN
               SEMI = -0.5*BODY(JCLOSE)/H(KSPAIR)
               IF (SEMI.LT.0.01*RSUM) THEN
                   NCH = NCH + 1
@@ -124,6 +131,12 @@
                   LIST(1,2*KSPAIR-1) = 0
                   BODYC(9) = BODY(2*KSPAIR-1)
                   BODYC(10) = BODY(2*KSPAIR)
+                  CALL CHDORMA(NAME(JCLOSE),BODY(2*KSPAIR-1),
+     &                         BODY(2*KSPAIR),SEMI)
+                  IF (INERT.AND.rank.eq.0) WRITE (6,13)  NAME(JCLOSE),
+     &                SEMI, RMIN, RSUM, NCH + 1
+   13             FORMAT (' CHAIN INERT    NM A RMIN RSUM NCH ',
+     &                    I8,1P,3E10.2,0P,I3)
                   ZMU = BODY(2*KSPAIR-1)*BODY(2*KSPAIR)/BODY(JCLOSE)
                   ECOLL = ECOLL + ZMU*H(KSPAIR)
                   BODY(2*KSPAIR-1) = 0.0D0

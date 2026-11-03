@@ -21,6 +21,7 @@
       COMMON/SLOW1/   TK2(0:NMX),EJUMP,KSCH(NMX),KSLOW,KCOLL
       COMMON/SLOW2/   stepl,stopB
       COMMON/CHREG/  TIMEC,TMAX,RMAXC,CM(10),NAMEC(6),NSTEP1,KZ27,KZ30
+      INCLUDE 'chinert.h'
       COMMON/CLUMP/   BODYS(NMX,5),T0S(5),TS(5),STEPS(5),RMAXS(5),
      &                NAMES(NMX,5),ISYS(5)
       COMMON/INTFAC/  LX,LE,LP,LV,LT,J10,NHALF2
@@ -816,6 +817,33 @@
               NGOOD = 1
               TGOOD = CHTIME
           END IF
+*       Terminate when a member comes within CHINRR semi-major axes of a
+*       dormant pair, or perturbs it above CHINGM (its KS motion is frozen
+*       while in the chain; adiabatic isolation is what justifies that).
+          DO 425 KD = 1,NDORM
+              KM = 0
+              DO 421 K = 1,N
+                  IF (NAMEC(K).EQ.NMDORM(KD)) KM = K
+  421         CONTINUE
+              IF (KM.EQ.0) GO TO 425
+              GD = 0.0
+              RDMIN = 1.0D+10
+              DO 423 K = 1,N
+                  IF (K.EQ.KM) GO TO 423
+                  RD2 = (X(3*K-2) - X(3*KM-2))**2 +
+     &                  (X(3*K-1) - X(3*KM-1))**2 +
+     &                  (X(3*K) - X(3*KM))**2
+                  RDMIN = MIN(RDMIN,RD2)
+                  GD = GD + 2.0*M(K)/M(KM)*(ADORM(KD)**2/RD2)**1.5
+  423         CONTINUE
+              IF (RDMIN.LT.(CHINRR*ADORM(KD))**2.OR.GD.GT.CHINGM) THEN
+                  if(rank.eq.0) WRITE (6,424)  NMDORM(KD), GD,
+     &                ADORM(KD), SQRT(RDMIN), N
+  424             FORMAT (' CHAIN INERT GUARD    NM GD A RMIN N ',
+     &                    I8,1P,3E10.2,0P,I3)
+                  GO TO 70
+              END IF
+  425     CONTINUE
 *       Terminate a chain that has outlived CHLIFE crossing times.
           IF (CHTIME.GT.TCHLIM) THEN
               if(rank.eq.0) WRITE (6,409) NSTEP1, N, CHTIME - TCH0,

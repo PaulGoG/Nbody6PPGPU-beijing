@@ -417,6 +417,7 @@ C      TIME = MIN(TBLOCK,TIME)
                   CALL FPOLY2(I5,I5,0)
 *     Add I5 into DELAY LIST
                   call delay_store_tlist(I5)
+                  IF (I5.GT.N) CALL RENEW(I5)
                   IF (NCH.EQ.6) THEN
 *     Remove ghost from ghost list
                       call delay_remove_tlist(I6,STEP,DTK)
@@ -424,6 +425,7 @@ C      TIME = MIN(TBLOCK,TIME)
                       CALL FPOLY2(I6,I6,0)
 *     Add I6 into DELAY LIST
                       call delay_store_tlist(I6)
+                      IF (I6.GT.N) CALL RENEW(I6)
                   END IF
               END IF
           END IF
@@ -433,10 +435,11 @@ C      TIME = MIN(TBLOCK,TIME)
           STEP3 = STEP(I3)
           STEP4 = STEP(I4)
 *
-*       Check re-initialization of dormant super-hard binary (second pair).
+*       Check re-initialization of dormant super-hard binaries (I3, I4).
           IF (MAX(I3,I4).GT.N) THEN
               I = MAX(I3,I4)
               CALL RENEW(I)
+              IF (MIN(I3,I4).GT.N.AND.I3.NE.I4) CALL RENEW(MIN(I3,I4))
           END IF
 *       Include initialization of #I5/I6 before KS calls change address.
       ELSE IF (NCH.GE.5.AND.I5.GT.0) THEN
@@ -446,6 +449,7 @@ C      TIME = MIN(TBLOCK,TIME)
           CALL FPOLY2(I5,I5,0)
 *     Add I5 into DELAY LIST
           call delay_store_tlist(I5)
+          IF (I5.GT.N) CALL RENEW(I5)
           IF (NCH.EQ.6) THEN
 *     Remove ghost from ghost list
               call delay_remove_tlist(I6,STEP,DTK)
@@ -453,6 +457,7 @@ C      TIME = MIN(TBLOCK,TIME)
               CALL FPOLY2(I6,I6,0)
 *     Add I6 into DELAY LIST
               call delay_store_tlist(I6)
+              IF (I6.GT.N) CALL RENEW(I6)
            END IF
       END IF
 *

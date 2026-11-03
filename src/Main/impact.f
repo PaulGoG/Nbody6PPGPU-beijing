@@ -17,6 +17,7 @@
       REAL*8  XX(3,3),VV(3,3)
       INTEGER LISTQ(100)
       LOGICAL flag_delay
+      LOGICAL CHINERT
 *     For diagnostic, safe for parallel
       SAVE LISTQ,QCHECK
       DATA IZARE,LISTQ(1),QCHECK /0,0,0.0D0/
@@ -293,6 +294,9 @@ c$$$          end if
 *       Adopt triple, quad or chain regularization for strong interactions.
 *     IF ((APO.GT.0.01*RMIN.OR.JCOMP.GT.N).AND.PMIN.GT.APO) GO TO 30
       IF ((APO.GT.0.01*RMIN.OR.JCOMP.GT.N).AND.PMIN.GT.1.5*APO) GO TO 30
+*       A chain-inert pair (a < CHINRT*RMIN) with a distant intruder goes
+*       to the merger check instead of a chain that cannot resolve it.
+      IF (JCOMP.LE.N.AND.PMIN.GT.1.5*APO.AND.CHINERT(IPAIR)) GO TO 30
 *     IF (APO.LE.0.01*RMIN.AND.PMIN.GT.2.0*APO) GO TO 30
       IF ((RIJ.GT.RMIN.AND.SEMI1.GT.0.0).OR.RIJ.GT.2.0*RMIN) GO TO 100
       IF (PERTM.GT.100.0*GSTAR) GO TO 30
@@ -442,8 +446,10 @@ c$$$      call mpi_barrier(MPI_COMM_WORLD,ierr)
               END IF
 *       Check reduction of c.m. index (JPAIR becomes JPAIR - 1 if > IPAIR).
               IF (JPAIR.GT.IPAIR) JCLOSE = JCLOSE - 1
-              IF (KZ(26).LT.2) THEN
-*       Replace unperturbed near-synchronous binary by inert body in CHAIN.
+              IF (KZ(26).LT.2.OR.(CHINERT(JPAIR).AND.
+     &            MIN(SEMI0,SEMI2).LT.0.01*RIJ)) THEN
+*       Replace unperturbed near-synchronous binary by inert body in CHAIN
+*       (a chain-inert pair below 0.01*RIJ under any KZ(26)).
                   JCOMP = 0
                   if(rank.eq.0)
      &            WRITE (6,25)  SEMI0, RIJ, R(JPAIR), GAMMA(JPAIR)
