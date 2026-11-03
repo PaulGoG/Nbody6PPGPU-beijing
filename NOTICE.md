@@ -234,6 +234,14 @@ the same source as `v2026.07.6`).
   every changed neighbour entered the tidal energy (a systematic residual of the energy check of the order of the
   tidal work itself, independent of the time steps; the tidal energy had the wrong sign on a Plummer sphere on
   the solar circle). The copy receives the same correction; the forces are unchanged [v2026.07.23].
+- `chinert.f` (new), `impact.f`, `setsys.f`, `chmod_chain.f`, `chain.f`, `chterm.f`, `renew.f`: a bound KS pair
+  with a semi-major axis below 10⁻³ RMIN that lies below 0.01 of the chain scale enters a chain as a dormant
+  c.m. body under any KZ(26)/KZ(27) (the inert-binary path was restricted to KZ(26) < 2 and KZ(27) > 0, so under
+  the chain slow-down such a pair was resolved by the chain integrator, whose consistency then grew geometrically
+  until a lifetime cut); a registry keyed by the c.m. name restores up to two dormant pairs at termination (at
+  every member position, I3–I6); the chain is terminated and the pair renewed when a member comes within 30
+  semi-major axes of it or perturbs it above GMAX; a chain-inert pair with a single intruder whose pericentre
+  exceeds 1.5 apocentres goes to the merger check instead of a chain [v2026.07.24].
 - From upstream `dev`, cherry-picked with their authorship: supernova ghosts removed from neighbour and
   perturber lists in `mdot.F`, ghost guards in `coal.f`, `chterm.f`, `expel.f`, `expel2.f`; `lagr.f`
   cumulative statistics and initialised radii under KZ(8) = 0; the Eggleton IMF exponent in `imf2.f`; HDF5
