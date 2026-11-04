@@ -227,7 +227,11 @@
                   GO TO 15
                END IF
             ELSE
-               RLAGR(J) = RLAGR(J-1)
+               IF (J.GT.1) THEN
+                   RLAGR(J) = RLAGR(J-1)
+               ELSE
+                   RLAGR(J) = 0.0D0
+               END IF
                I = I - 1
                GO TO 15
             END IF
@@ -443,7 +447,11 @@
          DO 17 J = 1, NLENS
  21         I = I + 1
             IF(I.GT.NSNGL) THEN
-               RSLAGR(J) = RSLAGR(J-1)
+               IF (J.GT.1) THEN
+                   RSLAGR(J) = RSLAGR(J-1)
+               ELSE
+                   RSLAGR(J) = 0.0D0
+               END IF
                GO TO 17
             END IF
             IM = ISLIST(I)
@@ -460,7 +468,11 @@
          DO 18 J = 1, NLENS
  22         I = I + 1
             IF(I.GT.NBIN) THEN
-               RBLAGR(J) = RBLAGR(J-1)
+               IF (J.GT.1) THEN
+                   RBLAGR(J) = RBLAGR(J-1)
+               ELSE
+                   RBLAGR(J) = 0.0D0
+               END IF
                GO TO 18
             END IF
             IM = IBLIST(I)
