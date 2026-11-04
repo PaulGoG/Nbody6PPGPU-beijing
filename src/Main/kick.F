@@ -403,6 +403,9 @@ c		Sambaran 2019.11.19.
 *       Skip case of zero kick velocity.
       IF (VKICK.EQ.0.0D0.OR.DISP0.EQ.0.0D0) then
          WHICH1 = ' ZERO VELOCITY KICK:'
+*       The diagnostic prints the unchanged speed (VI2, VF2 were unset).
+         VI2 = XDOT(1,I)**2 + XDOT(2,I)**2 + XDOT(3,I)**2
+         VF2 = VI2
          GO TO 25
       ENDIF
 *
