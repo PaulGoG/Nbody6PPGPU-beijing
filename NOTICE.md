@@ -242,6 +242,18 @@ the same source as `v2026.07.6`).
   every member position, I3–I6); the chain is terminated and the pair renewed when a member comes within 30
   semi-major axes of it or perturbs it above GMAX; a chain-inert pair with a single intruder whose pericentre
   exceeds 1.5 apocentres goes to the merger check instead of a chain [v2026.07.24].
+- `coal.f`: the companion of a coalescing KS pair was replaced in the perturber list by body N − 1 when it stood
+  at N; when every body is in a pair the primary itself stands at N − 1, so the potential correction evaluated the
+  primary against itself and wrote NaN into ECOLL (every `ROCHE COAL` of an all-binary model halted the run). The
+  stand-in is now N + 1, a c.m. body, as in `cmbody.f` [v2026.07.25].
+- `exchange_tlist.f`, `replace_tlist.f`, `remove_tlist.f`: the search of a step level compared the first position
+  past an absent or empty level, which belongs to the next level; an exchange of two c.m. bodies could find the
+  index it had just written and undo itself, leaving a body filed under the wrong level, and the next removal read
+  `NXTLST(0)` (SIGSEGV after a cascade of common-envelope coalescences in one block). Absent or empty levels go to
+  the delay list or to the existing abort [v2026.07.25].
+- `lagr.f`: the first Lagrangian radius of an empty set of singles or binaries was read from index 0; it is zero
+  [v2026.07.25]. `kick.F`: the zero-kick diagnostic printed unset speeds (NaN or 10⁶ km/s); it prints the body's
+  speed, which the kick does not change [v2026.07.25].
 - From upstream `dev`, cherry-picked with their authorship: supernova ghosts removed from neighbour and
   perturber lists in `mdot.F`, ghost guards in `coal.f`, `chterm.f`, `expel.f`, `expel2.f`; `lagr.f`
   cumulative statistics and initialised radii under KZ(8) = 0; the Eggleton IMF exponent in `imf2.f`; HDF5
