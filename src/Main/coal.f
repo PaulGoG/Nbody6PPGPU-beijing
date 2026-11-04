@@ -166,8 +166,12 @@
           JPERT(L) = LIST(L+1,ICM)
           IF (JPERT(L).EQ.I2) THEN      !unlikely condition but no harm.
               L2 = L
+*       The stand-in must differ from #I1: when all bodies are in pairs
+*       KSTERM leaves I1 = N - 1, I2 = N, and N - 1 would make NBPOT
+*       evaluate #I1 against itself (DP = Inf - Inf).  N + 1 is a c.m.
+*       body (as in CMBODY).
               JPERT(L) = N
-              IF (I2.EQ.N) JPERT(L) = N - 1
+              IF (I2.EQ.N) JPERT(L) = N + 1
           ELSE
 *       Determine closest external member for possible KS.
               JJ = JPERT(L)
