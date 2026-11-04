@@ -42,6 +42,16 @@
          call abort()
       ELSE
          LL = NDTK(LI+1)+1
+*       An absent or empty level holds no index: the position after its
+*       end belongs to the next level, where a match is the wrong entry.
+         IF(LI.LT.NDTMIN.OR.LI.GT.NDTMAX.OR.LL.GT.NDTK(LI)) THEN
+            IF(NLSTDELAY(1).GT.0) GO TO 12
+            if(rank.eq.0)
+     &      write(6,*) 'exc Error: Index ',I,' not in NXTLST, level ',
+     &           LI,'! STEP ',STEP(I)
+            call flush(6)
+            call abort()
+         END IF
  1       IF(NXTLST(LL).EQ.I) THEN
             NXTLST(LL) = J
             GO TO 30
@@ -91,6 +101,16 @@
          call abort()
       ELSE
          LL = NDTK(LJ+1)+1
+*       An absent or empty level holds no index: the position after its
+*       end belongs to the next level, where a match is the wrong entry.
+         IF(LJ.LT.NDTMIN.OR.LJ.GT.NDTMAX.OR.LL.GT.NDTK(LJ)) THEN
+            IF(NLSTDELAY(1).GT.0) GO TO 22
+            if(rank.eq.0)
+     &      write(6,*) 'exc2 Error: Index ',J,' not in NXTLST, level ',
+     &           LJ,'! STEP ',STEP(J)
+            call flush(6)
+            call abort()
+         END IF
  2       IF(NXTLST(LL).EQ.J) THEN
             NXTLST(LL) = I
             RETURN

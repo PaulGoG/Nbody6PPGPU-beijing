@@ -36,6 +36,20 @@ c$$$      call flush(6)
          call abort()
       ELSE
          LL = NDTK(LI+1)+1
+*       An absent or empty level holds no index: the position after its
+*       end belongs to the next level, where a match is the wrong entry.
+         IF(LI.LT.NDTMIN.OR.LI.GT.NDTMAX.OR.LL.GT.NDTK(LI)) THEN
+            DO L = 2, NLSTDELAY(1)+1
+               IF(NLSTDELAY(L).EQ.I) THEN
+                  NLSTDELAY(L) = J
+                  RETURN
+               END IF
+            END DO
+            if(rank.eq.0) write(6,*) 'rep Error: Index ',I,
+     &           ' not in NXTLST, level ',LI,'! STEP ',STEP(I)
+            call flush(6)
+            call abort()
+         END IF
  1       IF(NXTLST(LL).EQ.I) THEN
             NXTLST(LL) = J
          ELSE

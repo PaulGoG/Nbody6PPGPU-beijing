@@ -51,6 +51,15 @@ c$$$     &              NGHOSTS,'LIST',NXTLST(NXTLIMIT+1:NXTLIMIT+NGHOSTS)
       END DO
 *     Replace removing particle index by the end index of step level K
       LL = NDTK(K+1)+1
+*       An absent or empty level holds no index: the position after its
+*       end belongs to the next level, where a match is the wrong entry.
+      IF(K.LT.NDTMIN.OR.K.GT.NDTMAX.OR.LL.GT.NDTK(K)) THEN
+         if(rank.eq.0)
+     &   write(6,*) 'rem Error: Index ',J,' not in NXTLST, level ',
+     &        K,'! STEP ',STEP(J)
+         call flush(6)
+         call abort()
+      END IF
  1    IF(NXTLST(LL).EQ.J) THEN
          NXTLST(LL) = NXTLST(NDTK(K))
          NDTK(K) = NDTK(K) - 1
