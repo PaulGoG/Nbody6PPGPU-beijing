@@ -1513,8 +1513,10 @@
                SEP = MAX(SEP,RAD(2))
 *     --02/28/13 9:58-lwang-add----------------------------------------*
 ***** Note:add---------------------------------------------------------**
-* Perform coalescence check after shrinkage.
-               IF (RAD(1)+RAD(2).LT.SEP)THEN
+* Perform coalescence check after shrinkage: contact at periastron as
+* in BSE (evolv2.f). The test read RAD(1)+RAD(2).LT.SEP, which
+* coalesced every pair that did not touch.
+               IF (RAD(1)+RAD(2).GT.SEP*(1.D0-ECC))THEN
                   IXXX = 8
                   COALS = .TRUE.
 * Abbas bug fix ---------------------
