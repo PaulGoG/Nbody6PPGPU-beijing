@@ -254,6 +254,29 @@ the same source as `v2026.07.6`).
 - `lagr.f`: the first Lagrangian radius of an empty set of singles or binaries was read from index 0; it is zero
   [v2026.07.25]. `kick.F`: the zero-kick diagnostic printed unset speeds (NaN or 10⁶ km/s); it prints the body's
   speed, which the kick does not change [v2026.07.25].
+- `roche.f`: the coalescence check at the first iteration of a Roche episode (after the tidal shrinkage of an
+  eccentric or unsynchronised pair) read `RAD(1)+RAD(2).LT.SEP` and coalesced every pair whose stars did not
+  touch: 87–94 % of the Roche episodes of the massive-binary ladders ended there (IXXX = 8) and no accretion
+  phase was ever reached. The test is the BSE contact condition at periastron, `RAD(1)+RAD(2).GT.SEP*(1-ECC)`
+  (Hurley, Tout & Pols 2002, `evolv2.f`). Inherited from the 2013 update; NBODY7 carries the same line. On the
+  ladders (300 stars in pairs, 50 Myr): 43 and 22 Roche episodes with 3 and 4 coalescences, one of them at the onset test
+  (a contact pair), in place of 31 episodes with 27 coalescences and 16 with 16, all but one at the onset test [v2026.07.26].
+- `adjust.F`: BODY1, the largest body mass, which scales the fast test of the KS perturber search, was rebuilt
+  after the escaper test `RI2 > 4 RTIDE**2`, and the tidal radius is set later in the same routine, so at the
+  first adjustment every body was skipped and BODY1 stayed zero until the second adjustment: every KS pair of
+  the first interval was advanced without perturbers (a Kozai–Lidov cycle lagged by exactly DTADJ; the AZ of
+  the first output was zero). The escaper test applies only once the tidal radius is set [v2026.07.26].
+- `tstep2.f`, `steps2.f`: under KZ(40) = 0 a body at rest under a constant force (zero jerk) got the largest
+  block step, the rest branch of v2026.07.12 returning infinity, and a cold system moved under its initial
+  forces (a triple at rest: energy off by 19 % at t = 1.56). TSTEP2 keeps the velocity scale when the jerk
+  vanishes, and STEPS2 bounds both start-up steps by the free-fall scale of the neighbour sphere, sqrt(ETA RS/F),
+  inactive for bodies in motion; the triple at rest holds its energy to 1e-7 [v2026.07.26].
+- `intgrt.F`: an output between adjustments (DELTAT < DTADJ) wrote the `conf.3` header and the `TIME[NB]` line
+  with the block time that crossed TNEXT, up to one block step ahead of the state (predicted to TNEXT); TTOT is
+  refreshed before OUTPUT [v2026.07.26].
+- `input.F`: on MPI builds READSE read the `&INSSE`, `&INBSE` and `&INCOLL` namelists on rank 0 only and nothing
+  broadcast the commons, so the other ranks integrated with the Level values while rank 0 echoed the requested
+  set; the namelist members are broadcast after the read (compiled with OpenMPI 5.0, not run) [v2026.07.26].
 - From upstream `dev`, cherry-picked with their authorship: supernova ghosts removed from neighbour and
   perturber lists in `mdot.F`, ghost guards in `coal.f`, `chterm.f`, `expel.f`, `expel2.f`; `lagr.f`
   cumulative statistics and initialised radii under KZ(8) = 0; the Eggleton IMF exponent in `imf2.f`; HDF5
