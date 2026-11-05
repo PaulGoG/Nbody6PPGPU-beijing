@@ -393,6 +393,9 @@ C         IF(J.EQ.9951) print*,'L',L,'J',J,'T',TIME
 *       Also check output time in case DTADJ & DELTAT not commensurate.
       IF (TIME.GT.TNEXT) THEN
           TIME = TNEXT
+*       Refresh the total time written by OUTPUT (the bodies are predicted
+*       to TNEXT; the block time stood up to one step behind it).
+          TTOT = TIME + TOFF
           CALL OUTPUT
           GO TO 1
       END IF
