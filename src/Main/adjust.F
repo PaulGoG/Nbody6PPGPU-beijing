@@ -69,7 +69,12 @@ c$$$      end if
          RI2 = (X(1,I) - RDENS(1))**2 + (X(2,I) - RDENS(2))**2 +
      &        (X(3,I) - RDENS(3))**2
 *     Skip contribution from escapers.
-         IF (RI2.GT.4.0*RTIDE**2) GO TO 20
+*     The tidal radius is set below in this routine, so at the first
+*     adjustment it is still zero and the test skipped every body: BODY1
+*     stayed zero until the second adjustment and KSLIST, whose fast test
+*     scales with BODY1, found no perturber (every KS pair of the first
+*     interval was unperturbed).
+         IF (RTIDE.GT.0.0D0.AND.RI2.GT.4.0*RTIDE**2) GO TO 20
          AZ = AZ + BODY(I)*(X(1,I)*XDOT(2,I) - X(2,I)*XDOT(1,I))
          ZM = ZM + BODY(I)*(X(1,I)**2 + X(2,I)**2)
 *     Update the maximum single body mass but skip compact subsystems.
