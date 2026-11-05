@@ -9,7 +9,7 @@
 *
 *
 *       Set new steps and initialize prediction variables.
-!$omp parallel do private(I,K,DT,DTR,DTN,DTRN,FDUM)
+!$omp parallel do private(I,K,DT,DTR,DTN,DTRN,FDUM,FI2,FR2)
       DO 40 I = I1,I2
 *
 *       Include regular force in the irregular step (cf. Makino & SJA 1992).
@@ -20,6 +20,15 @@
 *       Determine irregular and regular steps by the general criterion.
           DT = TSTEP2(XDOT(1,I),FDUM,D1(1,I),ETAI)
           DTR = TSTEP2(XDOT(1,I),FR(1,I),D1R(1,I),ETAR)
+*       Bound both steps by the free-fall scale of the neighbour sphere,
+*       sqrt(ETA*RS/F): a body at rest under a constant force (zero jerk)
+*       has no other time scale at the start, and the criterion then gave
+*       the largest block step (a cold start moved under its initial
+*       forces). Inactive for a body in motion (steps are far smaller).
+          FI2 = FDUM(1)**2 + FDUM(2)**2 + FDUM(3)**2
+          IF (FI2.GT.0.0D0) DT = MIN(DT,SQRT(ETAI*RS(I)/SQRT(FI2)))
+          FR2 = FR(1,I)**2 + FR(2,I)**2 + FR(3,I)**2
+          IF (FR2.GT.0.0D0) DTR = MIN(DTR,SQRT(ETAR*RS(I)/SQRT(FR2)))
 *       Avoid the case when velocity is zero, time step is zero
           DT = MAX(DT,DTK(64))
           DTR = MAX(DT,DTR)
