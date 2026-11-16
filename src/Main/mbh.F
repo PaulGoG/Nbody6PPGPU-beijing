@@ -305,7 +305,7 @@
 *       polynomials of all other bodies; its mass leaves ZMASS. The star becomes a ghost as in COAL: zero mass, far
 *       from the cluster, in the ghost part of the block list. Stamped
 *       line 'TDE' (KIND 1, disruption) or 'TDE PLUNGE' (KIND 2,
-*       q < 4 G M/c^2 above r_t): time, name, type, mass, radius, q,
+*       q < 8 G M/c^2 above r_t): time, name, type, mass, radius, q,
 *       r_t, beta, booked energy, black-hole mass.
 *
       INCLUDE 'common6.h'
