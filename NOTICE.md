@@ -132,7 +132,7 @@ the same source as `v2026.07.6`).
   the perturbation estimate of the KS candidate search (without it a pair formed deep in the black hole's field
   was integrated as unperturbed); its potential enters the external energy. After every block step a single star
   whose two-body orbit about the black hole has its pericentre within the step and inside r_t/β, or inside
-  4 G M/c², is removed at the passage: its energy in the cluster and black-hole potentials goes into `ECOLL`, its
+  8 G M/c² (4 G M/c² before v2026.07.27), is removed at the passage: its energy in the cluster and black-hole potentials goes into `ECOLL`, its
   mass leaves the cluster, it becomes a ghost as in `coal.f`, and a stamped line `TDE` or `TDE PLUNGE` is written.
   r_t is `RACCRPC` (`RTMODE = 2`) or R★ (M/m★)^{1/3} with the stellar radius (`RTMODE = 1`, `KZ(19) ≥ 3`).
   `IPART = 1, 2` replaces the full-disruption threshold by the stripped fraction of Guillochon & Ramirez-Ruiz
@@ -277,6 +277,10 @@ the same source as `v2026.07.6`).
 - `input.F`: on MPI builds READSE read the `&INSSE`, `&INBSE` and `&INCOLL` namelists on rank 0 only and nothing
   broadcast the commons, so the other ranks integrated with the Level values while rank 0 echoed the requested
   set; the namelist members are broadcast after the read (compiled with OpenMPI 5.0, not run) [v2026.07.26].
+- `mbh.F`: the capture radius of the static black hole is compared with the Newtonian pericentre of the star's
+  orbit, so it is 8 G M/c², the Newtonian pericentre of the marginally captured parabolic orbit (angular momentum
+  4 G M/c, Kesden 2012, DOI 10.1103/PhysRevD.85.024037), not its relativistic periapsis 4 G M/c². Compact
+  remnants with a pericentre between 4 and 8 G M/c² were neither disrupted nor captured [v2026.07.27].
 - From upstream `dev`, cherry-picked with their authorship: supernova ghosts removed from neighbour and
   perturber lists in `mdot.F`, ghost guards in `coal.f`, `chterm.f`, `expel.f`, `expel2.f`; `lagr.f`
   cumulative statistics and initialised radii under KZ(8) = 0; the Eggleton IMF exponent in `imf2.f`; HDF5

@@ -10,7 +10,7 @@
 *       irregular force of every body (MBHFORCE), on KS perturbations as
 *       a tidal difference and in the initial polynomials (MBHFPOLY); its
 *       potential energy enters EPL. A single star whose orbit about it
-*       reaches r_t/BETAF, or 4 G M/c^2, is removed at its pericentre
+*       reaches r_t/BETAF, or 8 G M/c^2, is removed at its pericentre
 *       passage (MBHCHECK, MBHTDE). With FACC > 0 the black hole gains
 *       FACC of every disrupted or stripped mass and the whole of a
 *       plunging star (MBHGROW). Requires KZ(14) = 0.
@@ -162,7 +162,7 @@
 *       capture radius and the pericentre lies within the star's next step
 *       ahead or 2 steps behind, so that a passage between two steps is
 *       not missed (a test of the sampled position alone would be):
-*       q < 4 G M/c^2 above r_t: plunge; beta = r_t/q >= beta_d: full
+*       q < 8 G M/c^2 above r_t: plunge; beta = r_t/q >= beta_d: full
 *       disruption (MBHTDE); beta_p <= beta < beta_d under IPART > 0: the
 *       star loses the fraction C(beta) of Guillochon & Ramirez-Ruiz
 *       (2013, Appendix; 10.1088/0004-637X/767/1/25) and keeps its orbit
@@ -179,7 +179,11 @@
 *
       IACC = 0
       NCAND = 0
-      RPL = 4.0D0*CMBH/CLIGHT**2
+*       Capture radius for the Newtonian pericentre q = h^2/(mu (1+e)):
+*       a parabolic orbit about a Schwarzschild hole is captured for
+*       h < 4 G M/c (Kesden 2012, 10.1103/PhysRevD.85.024037), that is
+*       for q < 8 G M/c^2; 4 G M/c^2 is the relativistic periapsis.
+      RPL = 8.0D0*CMBH/CLIGHT**2
       IF (IPART.EQ.1) THEN
           BETP = 0.6D0
           BETD = 1.85D0
